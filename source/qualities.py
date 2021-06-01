@@ -22,9 +22,7 @@ def agg(x, L, a=[]):
         return np.prod(np.power(x,a/(np.sum(a))),axis=1)
 
 def all_aggs(in_chan, out_chan, in_weight, out_weight):
-    return np.asarray([agg(np.concatenate((in_chan,out_chan),axis=1),L=1),agg(np.concatenate((in_chan,out_chan),axis=1),L=2),
-    agg(np.concatenate((in_chan,out_chan),axis=1),L=3),agg(np.concatenate((in_chan,out_chan),axis=1),L=4,a=np.concatenate((in_weight,out_weight),axis=1)),
-    agg(np.concatenate((in_chan,out_chan),axis=1),L=5,a=np.concatenate((in_weight,out_weight),axis=1))])
+    return np.asarray([agg(np.concatenate((in_chan,out_chan),axis=1),L=i,a=np.concatenate((in_weight,out_weight),axis=1)) for i in range(1,6)])
 
 if __name__ == "__main__":
     filename = "results-06-01-2021_11-44-29-NATSS-cifar10-90"
@@ -33,7 +31,10 @@ if __name__ == "__main__":
     data = dict()
 
     for key in list(df.keys()):
-        data[key] = np.array_split(df[key],list(np.where(pd.isna(df[key]))[0]))
+        idx = list(np.where(pd.isna(df[key]))[0])
+        idx = idx - np.arange(0,len(idx),1)
+        data[key] = df[key].dropna(axis=0)
+        data[key] = np.array_split(data[key],idx)
         data[key] = ma.masked_array(data[key], mask=data[key]==0)
 
     data['in_QS_BE'] = np.arctan2(data['in_S_BE'],(1-1/data['in_C_BE']))
@@ -45,6 +46,13 @@ if __name__ == "__main__":
 
     aggregates['QS_BE'] = all_aggs(data['in_QS_BE'],data['out_QS_BE'],data['in_weight_BE'],data['out_weight_BE'])
     aggregates['QS_AE'] = all_aggs(data['in_QS_AE'],data['out_QS_AE'],data['in_weight_AE'],data['out_weight_AE'])
-    aggregates['QE_BE'] = all_aggs(data['in_QE_BE'],data['out_QE_BE'],data['in_weight_BE'],data['out_weight_BE'])
-    aggregates['QE_AE'] = all_aggs(data['in_QE_AE'],data['out_QE_AE'],data['in_weight_AE'],data['out_weight_AE'])
+    aggregates['QE_BE'] = all_aggs(data['in_ER_BE'],data['out_ER_BE'],data['in_weight_BE'],data['out_weight_BE'])
+    aggregates['QE_AE'] = all_aggs(data['in_ER_AE'],data['out_ER_AE'],data['in_weight_AE'],data['out_weight_AE'])
     aggregates['test_acc'] = np.mean(data['test_acc'],axis=1)
+    aggregates['train_acc'] = np.mean(data['test_acc'],axis=1)
+    aggregates['test_loss'] = np.mean(data['test_acc'],axis=1)
+    aggregates['train_loss'] = np.mean(data['test_acc'],axis=1)
+    aggregates['gap'] = np.mean(data['test_acc'],axis=1)
+
+    plt.plot(aggregates['QE_AE'][1],aggregates['test_acc'],'ro')
+    plt.show()
