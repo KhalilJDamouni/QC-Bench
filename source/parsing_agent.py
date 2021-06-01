@@ -1,9 +1,11 @@
 import sys
 import os
+import tensorflow as tf
 import process
 import numpy as np
 from nats_bench import create
 import glob
+import json
 
 class ParsingAgent:
     index = 0
@@ -33,11 +35,10 @@ class ParsingAgent:
             self.sspace = glob.glob(sys.path[0][0:-7]+'/models/NATST/*')
 
         if(bench == 'DEMOGEN'):
-            self.files = []
+            self.sspace = []
             folders = ["NIN_CIFAR10", "RESNET_CIFAR10", "RESNET_CIFAR100"]
             for folder in folders:
-                self.files.extend(glob.glob("DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + folder + "/*"))
-            self.index = 0
+                self.sspace.extend(glob.glob("DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + folder + "/*"))
 
         if(new != 1):
             self.index = start
@@ -57,14 +58,15 @@ class ParsingAgent:
                 performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
                 performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
 
+
             if(self.bench == 'DEMOGEN'):
                 with tf.compat.v1.Session() as sess:
                     #Get Model Number
                     model_num = self.index
 
                     #Load Model
-                    new_saver = tf.compat.v1.train.import_meta_graph(files[self.index] + "/model.ckpt-150000.meta")
-                    new_saver.restore(sess, files[self.index] + '/model.ckpt-150000')
+                    new_saver = tf.compat.v1.train.import_meta_graph(self.sspace[self.index] + "/model.ckpt-150000.meta")
+                    new_saver.restore(sess, self.sspace[self.index] + '/model.ckpt-150000')
                     
                     #Extract Weights
                     variables_names = [v.name for v in tf.compat.v1.trainable_variables()]
@@ -72,21 +74,16 @@ class ParsingAgent:
                     weights = []
                     for k, v in zip(variables_names, values):
                         if('conv' in k and "kernel" in k):
-                            weights.extend(v)
-                            #print ("Variable: ", k)
-                            #print ("Shape: ", v.shape)
-                            #print (v)
+                            weights.append(v)
                     
                     #Extract Performance
-                    with open(files[self.index] + "/eval.json", "r") as read_file:
+                    with open(self.sspace[self.index] + "/eval.json", "r") as read_file:
                         eval_data = json.load(read_file)
-                    with open(files[self.index] + "/train.json", "r") as read_file:
+                    with open(self.sspace[self.index] + "/train.json", "r") as read_file:
                         train_data = json.load(read_file)
                      
                     performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
                 
-                
-                self.index += 1
         
         except Exception as error:
             print(type(error))
