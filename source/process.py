@@ -154,56 +154,28 @@ def compute(tensor: torch.Tensor) -> torch.Tensor:
 
     return KG, condition, effective_rank
 
-def get_metrics(params,key1,key2):
-    layer_tensor=params[key1][key2]
+def get_metrics(weight):
+    layer_tensor=weight
     tensor_size = layer_tensor.shape
-    #print(tensor_size)
-    #print(layer_tensor)
 
     mode_3_unfold = layer_tensor.permute(1, 0, 2, 3)
     mode_3_unfold = torch.reshape(mode_3_unfold, [tensor_size[1], tensor_size[0]*tensor_size[2]*tensor_size[3]])
 
     in_KG_AE, in_condition_AE, in_ER_AE, in_rank_AE = compute_low_rank(mode_3_unfold)
     in_weight_AE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
-    try:
-        in_quality_AE = math.atan(in_KG_AE/(1-1/in_condition_AE))
-    except:
-        in_quality_AE = 0
 
     in_KG_BE, in_condition_BE, in_ER_BE = compute(mode_3_unfold)
     in_weight_BE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
-    try:
-        in_quality_BE = math.atan(in_KG_BE/(1-1/in_condition_BE))
-    except:
-        in_quality_BE = 0
 
-    #print("in:", in_KG, in_condition)
     mode_4_unfold = layer_tensor
     mode_4_unfold = torch.reshape(mode_4_unfold, [tensor_size[0], tensor_size[1]*tensor_size[2]*tensor_size[3]])
 
     out_KG_AE, out_condition_AE, out_ER_AE, out_rank_AE = compute_low_rank(mode_4_unfold)
     out_weight_AE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
-    try:
-        out_quality_AE = math.atan(out_KG_AE/(1-1/out_condition_AE))
-    except:
-        out_quality_AE = 0
 
-    out_KG_BE, out_condition_BE, out_ER_BE = compute(mode_3_unfold)
-    out_weight_BE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
-    try:
-        out_quality_BE = math.atan(out_KG_BE/(1-1/out_condition_BE))
-    except:
-        out_quality_BE = 0
+    out_KG_BE, out_condition_BE, out_ER_BE = compute(mode_4_unfold)
+    out_weight_BE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
 
-    #print("out:", out_KG, out_condition)
-    return [in_quality_BE, out_quality_BE], [in_quality_AE, out_quality_AE], [in_ER_BE, out_ER_BE], [in_ER_AE, out_ER_AE], [in_weight_BE, out_weight_BE], [in_weight_AE, out_weight_AE], [in_rank_AE, out_rank_AE]
+    return [in_KG_BE, out_KG_BE, in_KG_AE, out_KG_AE, in_condition_BE, out_condition_BE, in_condition_AE, out_condition_AE, in_ER_BE, out_ER_BE, in_ER_AE, out_ER_AE], [in_weight_BE, out_weight_BE, in_weight_AE, out_weight_AE]
 
-
-if __name__ == "__main__":
-    #Testing
-    print("Testing")
-    inp2 = torch.Tensor([[200,1,200,200,4,6],[0.1, 0.1, 0.1, 200, 200, 200],[0.1,0.1,0.1,0.1,0.1,0.1]])
-    print(inp2)
-    print("EVBMF output: ",EVBMF(inp2))
-    #print("output: " , compute_low_rank(inp,1))
 

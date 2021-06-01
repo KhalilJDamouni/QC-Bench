@@ -1,0 +1,50 @@
+import pandas as pd
+import numpy as np
+import numpy.linalg as LA
+import math
+from itertools import groupby
+import numpy.ma as ma
+import matplotlib.pyplot as plt
+import numpy.ma as ma
+from pathlib import Path
+import sys
+
+def agg(x, L, a=[]):
+    if(L == 1):
+        return np.mean(np.abs(x),axis=1)
+    if(L == 2):
+        return LA.norm(x,axis=1)/math.sqrt(len(x[0,:]))
+    if(L == 3):
+        return np.prod(np.power(x,1/len(x[0,:])),axis=1)
+    if(L == 4):
+        return np.average(np.abs(x),weights=a,axis=1)
+    if(L == 5):
+        return np.prod(np.power(x,a/(np.sum(a))),axis=1)
+
+def all_aggs(in_chan, out_chan, in_weight, out_weight):
+    return np.asarray([agg(np.concatenate((in_chan,out_chan),axis=1),L=1),agg(np.concatenate((in_chan,out_chan),axis=1),L=2),
+    agg(np.concatenate((in_chan,out_chan),axis=1),L=3),agg(np.concatenate((in_chan,out_chan),axis=1),L=4,a=np.concatenate((in_weight,out_weight),axis=1)),
+    agg(np.concatenate((in_chan,out_chan),axis=1),L=5,a=np.concatenate((in_weight,out_weight),axis=1))])
+
+if __name__ == "__main__":
+    filename = "results-06-01-2021_11-44-29-NATSS-cifar10-90"
+    file=Path(str(sys.path[0][0:-7])+"/outputs/"+filename+".csv")
+    df = pd.read_csv(file,skip_blank_lines=False)
+    data = dict()
+
+    for key in list(df.keys()):
+        data[key] = np.array_split(df[key],list(np.where(pd.isna(df[key]))[0]))
+        data[key] = ma.masked_array(data[key], mask=data[key]==0)
+
+    data['in_QS_BE'] = np.arctan2(data['in_S_BE'],(1-1/data['in_C_BE']))
+    data['out_QS_BE'] = np.arctan2(data['out_S_BE'],(1-1/data['out_C_BE']))
+    data['in_QS_AE'] = np.arctan2(data['in_S_AE'],(1-1/data['in_C_AE']))
+    data['out_QS_AE'] = np.arctan2(data['out_S_AE'],(1-1/data['out_C_AE']))
+
+    aggregates = dict()
+
+    aggregates['QS_BE'] = all_aggs(data['in_QS_BE'],data['out_QS_BE'],data['in_weight_BE'],data['out_weight_BE'])
+    aggregates['QS_AE'] = all_aggs(data['in_QS_AE'],data['out_QS_AE'],data['in_weight_AE'],data['out_weight_AE'])
+    aggregates['QE_BE'] = all_aggs(data['in_QE_BE'],data['out_QE_BE'],data['in_weight_BE'],data['out_weight_BE'])
+    aggregates['QE_AE'] = all_aggs(data['in_QE_AE'],data['out_QE_AE'],data['in_weight_AE'],data['out_weight_AE'])
+    aggregates['test_acc'] = np.mean(data['test_acc'],axis=1)
