@@ -14,7 +14,7 @@ import numpy.linalg as LA
 import numpy as np
 
 if __name__ == "__main__":
-    benchmark = 'NATS' #from NATS, NAS101, NAS201,
+    benchmark = 'NATS' #from NATS, NAS101, NAS201, DEMOGEN
     dataset = 'Cifar10'
     hp = '90'
     new = 0
