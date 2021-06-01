@@ -32,7 +32,14 @@ class ParsingAgent:
             self.api = create(sys.path[0][0:-7]+'/models/NATST', 'tss', fast_mode=True, verbose=False)
             self.sspace = glob.glob(sys.path[0][0:-7]+'/models/NATST/*')
 
-        if(new!=1):
+        if(bench == 'DEMOGEN'):
+            self.files = []
+            folders = ["NIN_CIFAR10", "RESNET_CIFAR10", "RESNET_CIFAR100"]
+            for folder in folders:
+                self.files.extend(glob.glob("DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + folder + "/*"))
+            self.index = 0
+
+        if(new != 1):
             self.index = start
 
 
@@ -50,6 +57,37 @@ class ParsingAgent:
                 performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
                 performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
 
+            if(self.bench == 'DEMOGEN'):
+                with tf.compat.v1.Session() as sess:
+                    #Get Model Number
+                    model_num = self.index
+
+                    #Load Model
+                    new_saver = tf.compat.v1.train.import_meta_graph(files[self.index] + "/model.ckpt-150000.meta")
+                    new_saver.restore(sess, files[self.index] + '/model.ckpt-150000')
+                    
+                    #Extract Weights
+                    variables_names = [v.name for v in tf.compat.v1.trainable_variables()]
+                    values = sess.run(variables_names)
+                    weights = []
+                    for k, v in zip(variables_names, values):
+                        if('conv' in k and "kernel" in k):
+                            weights.extend(v)
+                            #print ("Variable: ", k)
+                            #print ("Shape: ", v.shape)
+                            #print (v)
+                    
+                    #Extract Performance
+                    with open(files[self.index] + "/eval.json", "r") as read_file:
+                        eval_data = json.load(read_file)
+                    with open(files[self.index] + "/train.json", "r") as read_file:
+                        train_data = json.load(read_file)
+                     
+                    performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
+                
+                
+                self.index += 1
+        
         except Exception as error:
             print(type(error))
             print(error)
