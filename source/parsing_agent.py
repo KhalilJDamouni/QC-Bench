@@ -6,6 +6,8 @@ import numpy as np
 from nats_bench import create
 import glob
 import json
+import torch
+
 
 class ParsingAgent:
     index = 0
@@ -38,57 +40,58 @@ class ParsingAgent:
             self.sspace = []
             folders = ["NIN_CIFAR10", "RESNET_CIFAR10", "RESNET_CIFAR100"]
             for folder in folders:
-                self.sspace.extend(glob.glob("DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + folder + "/*"))
+                self.sspace.extend(glob.glob("models/DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + folder + "/*"))
+            print("Folders: ", self.sspace)
 
         if(new != 1):
             self.index = start
 
 
     def get_model(self):
-        try:
-            if(self.bench[0:-1] == 'NATS'):
-                model_path = self.sspace[self.index]
+        #try:
+        if(self.bench[0:-1] == 'NATS'):
+            model_path = self.sspace[self.index]
 
-                model_num = int((model_path.split(os.path.sep)[-1]).split('.')[0])
+            model_num = int((model_path.split(os.path.sep)[-1]).split('.')[0])
 
-                weights = self.api.get_net_param(model_num, self.dataset, hp=self.hp, seed=None)
-                weights = list((list(weights.values())[0]).values())
-                weights = [weight for weight in weights if (len(weight.shape)==4 and weight.shape[3]!=1)]
+            weights = self.api.get_net_param(model_num, self.dataset, hp=self.hp, seed=None)
+            weights = list((list(weights.values())[0]).values())
+            weights = [weight for weight in weights if (len(weight.shape)==4 and weight.shape[3]!=1)]
 
-                performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
-                performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
+            performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
+            performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
 
 
-            if(self.bench == 'DEMOGEN'):
-                with tf.compat.v1.Session() as sess:
-                    #Get Model Number
-                    model_num = self.index
+        if(self.bench == 'DEMOGEN'):
+            with tf.compat.v1.Session() as sess:
+                #Get Model Number
+                model_num = self.index
 
-                    #Load Model
-                    new_saver = tf.compat.v1.train.import_meta_graph(self.sspace[self.index] + "/model.ckpt-150000.meta")
-                    new_saver.restore(sess, self.sspace[self.index] + '/model.ckpt-150000')
-                    
-                    #Extract Weights
-                    variables_names = [v.name for v in tf.compat.v1.trainable_variables()]
-                    values = sess.run(variables_names)
-                    weights = []
-                    for k, v in zip(variables_names, values):
-                        if('conv' in k and "kernel" in k):
-                            weights.append(v)
-                    
-                    #Extract Performance
-                    with open(self.sspace[self.index] + "/eval.json", "r") as read_file:
-                        eval_data = json.load(read_file)
-                    with open(self.sspace[self.index] + "/train.json", "r") as read_file:
-                        train_data = json.load(read_file)
-                     
-                    performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
+                #Load Model
+                new_saver = tf.compat.v1.train.import_meta_graph(self.sspace[self.index] + "/model.ckpt-150000.meta")
+                new_saver.restore(sess, self.sspace[self.index] + '/model.ckpt-150000')
                 
+                #Extract Weights
+                variables_names = [v.name for v in tf.compat.v1.trainable_variables()]
+                values = sess.run(variables_names)
+                weights = []
+                for k, v in zip(variables_names, values):
+                    if('conv' in k and "kernel" in k):
+                        weights.append(torch.tensor(v.transpose((3,2,0,1))))
+                
+                #Extract Performance
+                with open(self.sspace[self.index] + "/eval.json", "r") as read_file:
+                    eval_data = json.load(read_file)
+                with open(self.sspace[self.index] + "/train.json", "r") as read_file:
+                    train_data = json.load(read_file)
+                    
+                performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
+            
         
-        except Exception as error:
-            print(type(error))
-            print(error)
-            return None
+        #except Exception as error:
+        #    print(type(error))
+        #    print(error)
+        #    return None
             
         qualities, channel_weights = self.process_weights(weights)
         id = np.expand_dims(np.broadcast_to(model_num, len(channel_weights)),axis=1)

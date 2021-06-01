@@ -4,10 +4,11 @@ import save
 import json
 import tensorflow as tf
 import glob
+import torch
 
 
 if __name__ == "__main__":
-    benchmark = 'NATSS' #from NATSS, NATST, NAS101, NAS201,
+    benchmark = 'DEMOGEN' #from NATSS, NATST, NAS101, NAS201, DEMOGEN
     dataset = 'cifar10' #For NATs -> ImageNet16-120, cifar10, cifar100
     hp = '90'
     new = 1
