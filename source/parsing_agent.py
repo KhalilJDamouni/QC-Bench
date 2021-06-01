@@ -1,5 +1,14 @@
+import sys
+import os
+import process
+import numpy as np
+from nats_bench import create
+import glob
+
 class ParsingAgent:
     index = 0
+    api = None
+    sspace = None
 
     def __init__(
             self,
@@ -12,12 +21,54 @@ class ParsingAgent:
         self.bench = bench
         self.dataset = dataset
         self.hp = hp
-        
+
+        if(bench == 'NATSS'):
+            #download dataset?
+            self.api = create(sys.path[0][0:-7]+'/models/NATSS', 'sss', fast_mode=True, verbose=False)
+            self.sspace = glob.glob(sys.path[0][0:-7]+'/models/NATSS/*')
+
+        if(bench == 'NATST'):
+            #download dataset?
+            self.api = create(sys.path[0][0:-7]+'/models/NATST', 'tss', fast_mode=True, verbose=False)
+            self.sspace = glob.glob(sys.path[0][0:-7]+'/models/NATST/*')
+
         if(new!=1):
             self.index = start
-    
-    def start():
-        return
 
-    def get_model():
-        return None. None
+
+    def get_model(self):
+        try:
+            if(self.bench[0:-1] == 'NATS'):
+                model_path = self.sspace[self.index]
+
+                model_num = int((model_path.split(os.path.sep)[-1]).split('.')[0])
+
+                weights = self.api.get_net_param(model_num, self.dataset, hp=self.hp, seed=None)
+                weights = list((list(weights.values())[0]).values())
+                weights = [weight for weight in weights if (len(weight.shape)==4 and weight.shape[3]!=1)]
+
+                performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
+                performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
+
+        except Exception as error:
+            print(type(error))
+            print(error)
+            return None
+            
+        qualities, channel_weights = self.process_weights(weights)
+        id = np.expand_dims(np.broadcast_to(model_num, len(channel_weights)),axis=1)
+        laymod = np.concatenate((id,np.asarray(channel_weights)),axis=1)
+
+        self.index+=1
+        return np.asarray(qualities), np.asarray(performance), laymod
+
+    def process_weights(self, weights):
+        qualities = []
+        channel_weights = []
+
+        for weight in weights:
+            layer_qualities, layer_weights = process.get_metrics(weight)
+            qualities.append(layer_qualities)
+            channel_weights.append(layer_weights)
+
+        return qualities, channel_weights
