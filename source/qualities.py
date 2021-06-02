@@ -19,9 +19,6 @@ def agg(x, L, a=[]):
         return LA.norm(x,axis=1)/np.sqrt(np.sum(a,axis=1))
     if(L == 3):
         a = np.logical_not(ma.getmaskarray(x))
-        #print(x[-1][-5:])
-        #print(a[-1][-5:])
-        #print(np.power(x,a/np.repeat(np.expand_dims(np.sum(a,axis=1),axis=1),a.shape[1],axis=1))[-1][-5:])
         return np.prod(np.power(x,a/np.repeat(np.expand_dims(np.sum(a,axis=1),axis=1),a.shape[1],axis=1)),axis=1)
     if(L == 4):
         a = a*np.logical_not(ma.getmaskarray(x))
@@ -85,10 +82,12 @@ if __name__ == "__main__":
     correlations = [correlationsp,correlationss]
     print(correlations)
 
+
+    #plots
     plt.subplot(2,1,1)
     plt.bar(correlationss.keys(),correlationss.values())
    
-   
+    
     plt.subplot(2,1,2)
     plt.plot(aggregates['QE_BE'][1],aggregates['test_acc'],'ro')
     plt.show()
