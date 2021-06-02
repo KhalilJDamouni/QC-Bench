@@ -56,12 +56,12 @@ class ParsingAgent:
 
             weights = self.api.get_net_param(model_num, self.dataset, hp=self.hp, seed=None)
             weights = list((list(weights.values())[0]).values())
-            weights = [weight for weight in weights if (len(weight.shape)==4 and weight.shape[3]!=1)]
+            weights = [weight for weight in weights if (len(weight.shape)==4)]
 
             performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
             performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
 
-                print(str(self.index)+"/"+str(len(self.sspace)))
+            print(str(self.index)+"/"+str(len(self.sspace)))
 
         if(self.bench == 'DEMOGEN'):
             with tf.compat.v1.Session() as sess:
