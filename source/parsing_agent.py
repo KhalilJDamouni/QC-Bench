@@ -58,6 +58,7 @@ class ParsingAgent:
                 performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
                 performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
 
+                print(str(self.index)+"/"+str(len(self.sspace)))
 
             if(self.bench == 'DEMOGEN'):
                 with tf.compat.v1.Session() as sess:

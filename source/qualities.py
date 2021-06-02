@@ -1,8 +1,9 @@
+import matplotlib
 import pandas as pd
 import numpy as np
 import numpy.linalg as LA
+from scipy import stats
 import math
-from itertools import groupby
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import numpy.ma as ma
@@ -25,10 +26,13 @@ def all_aggs(in_chan, out_chan, in_weight, out_weight):
     return np.asarray([agg(np.concatenate((in_chan,out_chan),axis=1),L=i,a=np.concatenate((in_weight,out_weight),axis=1)) for i in range(1,6)])
 
 if __name__ == "__main__":
-    filename = "results-06-01-2021_11-44-29-NATSS-cifar10-90"
+    filename = "results-06-01-2021_16-21-19-NATSS-cifar10-90"
     file=Path(str(sys.path[0][0:-7])+"/outputs/"+filename+".csv")
     df = pd.read_csv(file,skip_blank_lines=False)
     data = dict()
+
+    if(pd.isna(df.iloc[-1][1])):
+        df = df.drop(labels=df.shape[0]-1, axis=0)
 
     for key in list(df.keys()):
         idx = list(np.where(pd.isna(df[key]))[0])
@@ -54,5 +58,26 @@ if __name__ == "__main__":
     aggregates['train_loss'] = np.mean(data['test_acc'],axis=1)
     aggregates['gap'] = np.mean(data['test_acc'],axis=1)
 
-    plt.plot(aggregates['QE_AE'][1],aggregates['test_acc'],'ro')
+    #correlations
+    X = ['test_acc','gap']
+    Y = ['QS_BE','QS_AE','QE_BE','QE_AE']
+    correlationsp = dict()
+    correlationss = dict()
+    for x in X:
+        for y in Y:
+            for i in range(5):
+                correlationsp[y+'_'+x+'_L'+str(i+1)] = abs(stats.pearsonr(aggregates[x], aggregates[y][i])[0])
+                correlationss[y+'_'+x+'_L'+str(i+1)] = abs(stats.spearmanr(aggregates[x], aggregates[y][i])[0])
+    
+    correlations = [correlationsp,correlationss]
+    print(correlations)
+
+    plt.subplot(2,1,1)
+    plt.bar(correlationsp.keys(),correlationsp.values())
+   
+   
+   
+    plt.subplot(2,1,2)
+    plt.plot(aggregates['QE_AE'][1],aggregates['gap'],'ro')
     plt.show()
+
