@@ -40,7 +40,7 @@ class ParsingAgent:
             self.sspace = []
             folders = ["NIN_CIFAR10", "RESNET_CIFAR10", "RESNET_CIFAR100"]
             for folder in folders:
-                self.sspace.extend(glob.glob("models/DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + folder + "/*"))
+                self.sspace.extend(glob.glob("../models/DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + folder + "/*"))
             print("Folders: ", self.sspace)
 
         if(new != 1):
