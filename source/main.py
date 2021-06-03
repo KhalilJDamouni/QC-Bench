@@ -10,7 +10,7 @@ import torch
 if __name__ == "__main__":
     benchmark = 'NLP' #from NATSS, NATST, NAS101, NAS201, DEMOGEN, NLP
     dataset = 'RESNET_CIFAR10' #For NATs -> ImageNet16-120, cifar10, cifar100
-                        #For DEMOGEN -> NIN_CIFAR10, RESNET_CIFAR10, RESNET_CIFAR100
+                                #For DEMOGEN -> NIN_CIFAR10, RESNET_CIFAR10, RESNET_CIFAR100
     hp = '90'
     new = 1
     start = 0 #Seems to only work in batches of 35
