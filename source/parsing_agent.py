@@ -39,7 +39,8 @@ class ParsingAgent:
         if(bench == 'DEMOGEN'):
             self.sspace = []
             self.sspace.extend(glob.glob("../models/DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + self.dataset + "/*"))
-            print("Folders: ", self.sspace)
+            #print("Folders: ", self.sspace)
+            self.end = 0
 
 
         if(bench == 'NLP'):
@@ -74,24 +75,27 @@ class ParsingAgent:
                 model_num = self.index
 
                 #Load Model
-                new_saver = tf.compat.v1.train.import_meta_graph(self.sspace[self.index] + "/model.ckpt-150000.meta")
-                new_saver.restore(sess, self.sspace[self.index] + '/model.ckpt-150000')
+                new_saver = tf.compat.v1.train.import_meta_graph(self.sspace[model_num] + "/model.ckpt-150000.meta")
+                new_saver.restore(sess, self.sspace[model_num] + '/model.ckpt-150000')
                 
                 #Extract Weights
-                variables_names = [v.name for v in tf.compat.v1.trainable_variables()]
+                variables_names  = [v.name for v in tf.compat.v1.trainable_variables()]
                 values = sess.run(variables_names)
                 weights = []
                 for k, v in zip(variables_names, values):
                     if('conv' in k and "kernel" in k):
                         weights.append(torch.tensor(v.transpose((3,2,0,1))))
-                
-                #Extract Performance
-                with open(self.sspace[self.index] + "/eval.json", "r") as read_file:
-                    eval_data = json.load(read_file)
-                with open(self.sspace[self.index] + "/train.json", "r") as read_file:
-                    train_data = json.load(read_file)
-                
-                performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
+            
+            #Reset Global Variable
+            tf.compat.v1.reset_default_graph()
+
+            #Extract Performance
+            with open(self.sspace[self.index] + "/eval.json", "r") as read_file:
+                eval_data = json.load(read_file)
+            with open(self.sspace[self.index] + "/train.json", "r") as read_file:
+                train_data = json.load(read_file)
+            
+            performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
             
         if(self.bench == 'NLP'):
             model_num = self.index
