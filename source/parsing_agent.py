@@ -44,7 +44,7 @@ class ParsingAgent:
 
         if(bench == 'NLP'):
             self.sspace = glob.glob("../models/NAS-Bench-NLP/*")
-            print('Folders: ', self.sspace)
+            #print('Folders: ', self.sspace)
 
 
 
@@ -94,14 +94,15 @@ class ParsingAgent:
                 performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
             
         if(self.bench == 'NLP'):
-            print("Model: ", self.index)
+            model_num = self.index
+            print("Model: ", model_num)
 
             #Get Weights
             weights = []
             model = torch.load(self.sspace[self.index])
             for name in model:
                 if('raw' in name and len(model[name].shape) == 2):
-                    print(name, model[name].shape)
+                    #print(name, model[name].shape)
                     weights.append(model[name])
 
             #Get Performance
