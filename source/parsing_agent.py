@@ -38,10 +38,15 @@ class ParsingAgent:
 
         if(bench == 'DEMOGEN'):
             self.sspace = []
-            folders = ["NIN_CIFAR10", "RESNET_CIFAR10", "RESNET_CIFAR100"]
-            for folder in folders:
-                self.sspace.extend(glob.glob("../models/DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + folder + "/*"))
+            self.sspace.extend(glob.glob("../models/DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + self.dataset + "/*"))
             print("Folders: ", self.sspace)
+
+
+        if(bench == 'NLP'):
+            self.sspace = glob.glob("../models/NAS-Bench-NLP/*")
+            print('Folders: ', self.sspace)
+
+
 
         if(new != 1):
             self.index = start
@@ -61,7 +66,7 @@ class ParsingAgent:
             performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
             performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
 
-                print(str(self.index)+"/"+str(len(self.sspace)))
+            print(str(self.index)+"/"+str(len(self.sspace)))
 
         if(self.bench == 'DEMOGEN'):
             with tf.compat.v1.Session() as sess:
@@ -85,10 +90,25 @@ class ParsingAgent:
                     eval_data = json.load(read_file)
                 with open(self.sspace[self.index] + "/train.json", "r") as read_file:
                     train_data = json.load(read_file)
-                    
+                
                 performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
             
-        
+        if(self.bench == 'NLP'):
+            print("Model: ", self.index)
+
+            #Get Weights
+            weights = []
+            model = torch.load(self.sspace[self.index])
+            for name in model:
+                if('raw' in name and len(model[name].shape) == 2):
+                    print(name, model[name].shape)
+                    weights.append(model[name])
+
+            #Get Performance
+            suffix = self.sspace[self.index].split('\\')[-1].replace("dump_weights_model_", "").replace('.pt',"")
+            log = json.load(open('../nas-bench-nlp-release-master/train_logs_single_run/log_stats_model_' + suffix + '.json', 'r'))
+            performance = [0, log['test_losses'][-1], 0, log['train_losses'][-1], 0]
+
         #except Exception as error:
         #    print(type(error))
         #    print(error)
