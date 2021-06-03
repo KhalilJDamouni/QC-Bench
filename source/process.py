@@ -158,23 +158,39 @@ def get_metrics(weight):
     layer_tensor=weight
     tensor_size = layer_tensor.shape
 
-    mode_3_unfold = layer_tensor.permute(1, 0, 2, 3)
-    mode_3_unfold = torch.reshape(mode_3_unfold, [tensor_size[1], tensor_size[0]*tensor_size[2]*tensor_size[3]])
 
-    in_KG_AE, in_condition_AE, in_ER_AE, in_rank_AE = compute_low_rank(mode_3_unfold)
-    in_weight_AE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
+    if len(tensor_size==4):
+        mode_3_unfold = layer_tensor.permute(1, 0, 2, 3)
+        mode_3_unfold = torch.reshape(mode_3_unfold, [tensor_size[1], tensor_size[0]*tensor_size[2]*tensor_size[3]])
 
-    in_KG_BE, in_condition_BE, in_ER_BE = compute(mode_3_unfold)
-    in_weight_BE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
+        in_KG_AE, in_condition_AE, in_ER_AE, in_rank_AE = compute_low_rank(mode_3_unfold)
+        in_weight_AE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
 
-    mode_4_unfold = layer_tensor
-    mode_4_unfold = torch.reshape(mode_4_unfold, [tensor_size[0], tensor_size[1]*tensor_size[2]*tensor_size[3]])
+        in_KG_BE, in_condition_BE, in_ER_BE = compute(mode_3_unfold)
+        in_weight_BE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
 
-    out_KG_AE, out_condition_AE, out_ER_AE, out_rank_AE = compute_low_rank(mode_4_unfold)
-    out_weight_AE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
+        mode_4_unfold = layer_tensor
+        mode_4_unfold = torch.reshape(mode_4_unfold, [tensor_size[0], tensor_size[1]*tensor_size[2]*tensor_size[3]])
 
-    out_KG_BE, out_condition_BE, out_ER_BE = compute(mode_4_unfold)
-    out_weight_BE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
+        out_KG_AE, out_condition_AE, out_ER_AE, out_rank_AE = compute_low_rank(mode_4_unfold)
+        out_weight_AE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
+
+        out_KG_BE, out_condition_BE, out_ER_BE = compute(mode_4_unfold)
+        out_weight_BE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
+    elif len(tensor_size==2):
+        in_KG_AE, in_condition_AE, in_ER_AE, in_rank_AE = compute_low_rank(layer_tensor)
+        in_weight_AE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
+
+        in_KG_BE, in_condition_BE, in_ER_BE = compute(layer_tensor)
+        in_weight_BE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
+
+        out_KG_AE, out_condition_AE, out_ER_AE, out_rank_AE = in_KG_AE, in_condition_AE, in_ER_AE, in_rank_AE
+        out_weight_AE = in_weight_AE
+
+        out_KG_BE, out_condition_BE, out_ER_BE = in_KG_BE, in_condition_BE, in_ER_BE
+        out_weight_BE = in_weight_BE
+    else:
+        return None
 
     return [in_KG_BE, out_KG_BE, in_KG_AE, out_KG_AE, in_condition_BE, out_condition_BE, in_condition_AE, out_condition_AE, in_ER_BE, out_ER_BE, in_ER_AE, out_ER_AE], [in_weight_BE, out_weight_BE, in_weight_AE, out_weight_AE]
 
