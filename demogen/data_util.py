@@ -15,7 +15,6 @@
 
 """Getting a input function that will give input and label tensors."""
 
-from tensor2tensor import problems
 import tensorflow.compat.v1 as tf
 
 
@@ -62,7 +61,9 @@ def get_input(
 
   def input_data():
     """Input function to be returned."""
-    prob = problems.problem(problem_name)
+    print("uhohinput")
+    return
+    #prob = problems.problem(problem_name)
     if data == 'image_cifar100':
       dataset = prob.dataset(mode, preprocess=augmented)
       if not augmented: dataset = dataset.map(map_func=preprocess)

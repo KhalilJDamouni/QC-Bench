@@ -31,7 +31,7 @@ def all_aggs(in_chan, out_chan, in_weight, out_weight):
     return np.asarray([agg(np.ma.concatenate((in_chan,out_chan),axis=1),L=i,a=np.ma.concatenate((in_weight,out_weight),axis=1)) for i in range(1,6)])
 
 if __name__ == "__main__":
-    filename = "results-06-02-2021_10-24-29-NATSS-cifar10-90"
+    filename = "results-06-04-2021_08-22-31-zenNET-CIFAR10-90"
     file=Path(str(sys.path[0][0:-7])+"/outputs/"+filename+".csv")
     df = pd.read_csv(file,skip_blank_lines=False)
     data = dict()
@@ -44,8 +44,11 @@ if __name__ == "__main__":
         idx = idx - np.arange(0,len(idx),1)
         data[key] = df[key].dropna(axis=0)
         data[key] = np.array_split(data[key],idx)
+        idx = np.append(idx,len(df[key])-len(idx))
+        idx = np.insert(idx,0,0)
         maxLength = np.max(np.abs(np.diff(idx)))
         for i in range(len(data[key])):
+            print(str(maxLength),str(len(data[key][i])))
             data[key][i] = np.append(data[key][i],(np.zeros((maxLength-len(data[key][i])))))
             shapes = data[key][0].shape
         temp = np.asarray(data[key])
@@ -78,16 +81,18 @@ if __name__ == "__main__":
             for i in range(5):
                 correlationsp[y+'_'+x+'_L'+str(i+1)] = abs(stats.pearsonr(aggregates[x], aggregates[y][i])[0])
                 correlationss[y+'_'+x+'_L'+str(i+1)] = abs(stats.spearmanr(aggregates[x], aggregates[y][i])[0])
-    
+    #what about kendall rank?
     correlations = [correlationsp,correlationss]
     print(correlations)
 
 
     #plots
-    plt.subplot(2,1,1)
-    plt.bar(correlationss.keys(),correlationss.values())
+    #plt.subplot(2,1,1)
+    #plt.bar(correlationss.keys(),correlationss.values())
    
     
-    plt.subplot(2,1,2)
-    plt.plot(aggregates['QE_BE'][1],aggregates['test_acc'],'ro')
+    #plt.subplot(2,1,2)
+    plt.plot(aggregates['QE_AE'][3],aggregates['test_acc'],'ro')
+    m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
+    plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
     plt.show()

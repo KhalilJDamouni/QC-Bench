@@ -21,8 +21,8 @@ from __future__ import print_function
 
 import numpy as np
 import tensorflow.compat.v1 as tf
-import demogen.data_util as data_util
-import demogen.model_config as mc
+import data_util as data_util
+import model_config as mc
 
 
 def load_and_run(model_config, root_dir):

@@ -15,8 +15,8 @@
 
 """Utilities for getting the model object by name and configuration."""
 
-from demogen.models.nin import Nin
-from demogen.models.resnet import ResNet
+from models.nin import Nin
+from models.resnet import ResNet
 
 
 def get_model(model_name, config):

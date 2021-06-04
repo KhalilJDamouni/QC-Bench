@@ -38,9 +38,8 @@ class ParsingAgent:
 
         if(bench == 'DEMOGEN'):
             self.sspace = []
-            self.sspace.extend(glob.glob("../models/DEMOGEN/demogen_models.tar/demogen_models/home/ydjiang/experimental_results/model_dataset/" + self.dataset + "/*"))
+            self.sspace.extend(glob.glob(sys.path[0][0:-7]+"/models/DEMOGEN/ydjiang/experimental_results/model_dataset/"+self.dataset+"/*"))
             #print("Folders: ", self.sspace)
-            self.end = 0
 
 
         if(bench == 'NLP'):
@@ -67,8 +66,6 @@ class ParsingAgent:
             performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
             performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
 
-            print(str(self.index)+"/"+str(len(self.sspace)))
-
         if(self.bench == 'DEMOGEN'):
             with tf.compat.v1.Session() as sess:
                 #Get Model Number
@@ -86,7 +83,7 @@ class ParsingAgent:
                     if('conv' in k and "kernel" in k):
                         weights.append(torch.tensor(v.transpose((3,2,0,1))))
             
-            #Reset Global Variable
+            #Reset Global Variables
             tf.compat.v1.reset_default_graph()
 
             #Extract Performance

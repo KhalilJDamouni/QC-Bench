@@ -35,7 +35,7 @@ import json
 import os
 
 import tensorflow.compat.v1 as tf
-from demogen.models.get_model import get_model
+from models.get_model import get_model
 from tensorflow.contrib import training as contrib_training
 
 
