@@ -31,7 +31,7 @@ def all_aggs(in_chan, out_chan, in_weight, out_weight):
     return np.asarray([agg(np.ma.concatenate((in_chan,out_chan),axis=1),L=i,a=np.ma.concatenate((in_weight,out_weight),axis=1)) for i in range(1,6)])
 
 if __name__ == "__main__":
-    filename = "results-06-04-2021_08-22-31-zenNET-CIFAR10-90"
+    filename = "results-06-03-2021_13-59-15-DEMOGEN-NIN_CIFAR10-90"
     file=Path(str(sys.path[0][0:-7])+"/outputs/"+filename+".csv")
     df = pd.read_csv(file,skip_blank_lines=False)
     data = dict()
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     #plots
     #plt.subplot(2,1,1)
     #plt.bar(correlationss.keys(),correlationss.values())
-   
+    print(len(aggregates['QE_AE'][3]))
     
     #plt.subplot(2,1,2)
     plt.plot(aggregates['QE_AE'][3],aggregates['test_acc'],'ro')

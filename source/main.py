@@ -8,13 +8,13 @@ import torch
 
 
 if __name__ == "__main__":
-    benchmark = 'zenNET' #from NATSS, NATST, NAS101, NAS201, DEMOGEN, NLP, zenNET
-    dataset = 'ImageNet' #For NATs -> ImageNet16-120, cifar10, cifar100
+    benchmark = 'DEMOGEN' #from NATSS, NATST, NAS101, NAS201, DEMOGEN, NLP, zenNET
+    dataset = 'NIN_CIFAR10' #For NATs -> ImageNet16-120, cifar10, cifar100
                                 #For DEMOGEN -> NIN_CIFAR10, RESNET_CIFAR10, RESNET_CIFAR100
                                 #For zenNet -> CIFAR10, CIFAR100, ImageNet
     hp = '90'
     new = 1
-    start = 0 #Seems to only work in batches of 35
+    start = 0 
 
     if(new):
         file_name = save.get_name(benchmark,dataset,hp)
@@ -26,15 +26,16 @@ if __name__ == "__main__":
 
     agent = ParsingAgent(benchmark, dataset, hp, new, start)
 
-    qualities, performance, laymod = agent.get_model()
+    
     while (agent.index < len(agent.sspace)):
+        qualities, performance, laymod = agent.get_model()
         if qualities.shape[0] != 0:
-
+            
             print(str(agent.index)+'/'+str(len(agent.sspace)))
 
             performance = np.broadcast_to(performance,(qualities.shape[0],performance.shape[0]))
             to_write = np.concatenate((performance, qualities, laymod), axis=1)
             save.write(file_name,to_write)
-            qualities, performance, laymod = agent.get_model()
+
 
   
