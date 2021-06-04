@@ -47,6 +47,9 @@ class ParsingAgent:
             self.sspace = glob.glob("../models/NAS-Bench-NLP/*")
             #print('Folders: ', self.sspace)
 
+        if(bench == "zenNET"):
+            self.sspace = glob.glob("../models/zenNAS/" + self.dataset + "/*")
+            print('Folder: ', self.sspace)
 
 
         if(new != 1):
@@ -113,6 +116,24 @@ class ParsingAgent:
             suffix = self.sspace[self.index].split('\\')[-1].replace("dump_weights_model_", "").replace('.pt',"")
             log = json.load(open('../nas-bench-nlp-release-master/train_logs_single_run/log_stats_model_' + suffix + '.json', 'r'))
             performance = [0, log['test_losses'][-1], 0, log['train_losses'][-1], 0]
+
+        if(self.bench == 'zenNET'):
+            model_num = self.index
+            print("Model: ", model_num)
+
+            #Get Model
+            model = torch.load(self.sspace[self.index])
+
+            #Get Weights
+            weights = []
+            for key in model["state_dict"].keys():
+                if(len(model["state_dict"][key].shape) == 4 and not ("proj" in key)):
+                    #print(key, " : ", model["state_dict"][key].shape)
+                    weights.append(model["state_dict"][key])
+
+            #Get Performance
+            performance = [model['top1_acc'], 0, 0, 0, 0]
+
 
         #except Exception as error:
         #    print(type(error))
