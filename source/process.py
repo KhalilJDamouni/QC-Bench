@@ -102,7 +102,8 @@ def compute_low_rank(tensor: torch.Tensor) -> torch.Tensor:
             tensor = tensor.T
             tensor_size = tensor.shape
         U_approx, S_approx, V_approx = EVBMF(tensor)
-    except RuntimeError:
+    except RuntimeError as error:
+        print(error)
         return None, None, None
     rank = S_approx.shape[0] / tensor_size[0]
     low_rank_eigen = torch.diag(S_approx).data.cpu().numpy()
