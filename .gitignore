@@ -1,6 +1,7 @@
 /models
-QCEnv
-outputs
+/QCEnv
+/outputs
 /nas-bench-nlp-release-master
 /demogen
 /.vscode
+/data

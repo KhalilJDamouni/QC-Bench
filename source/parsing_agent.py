@@ -4,6 +4,7 @@ import tensorflow as tf
 import process
 import numpy as np
 from nats_bench import create
+from loadmodels import get_cell_based_tiny_net
 import glob
 import json
 import torch
@@ -63,6 +64,11 @@ class ParsingAgent:
             model_num = int((model_path.split(os.path.sep)[-1]).split('.')[0])
 
             weights = self.api.get_net_param(model_num, self.dataset, hp=self.hp, seed=None)
+
+            config = self.api.get_net_config(model_num,self.dataset)
+            model = get_cell_based_tiny_net(config)
+            model.load_state_dict(next(iter(weights.values())))
+
             weights = list((list(weights.values())[0]).values())
             weights = [weight for weight in weights if (len(weight.shape)==4)]
 
@@ -83,6 +89,7 @@ class ParsingAgent:
                 values = sess.run(variables_names)
                 weights = []
                 for k, v in zip(variables_names, values):
+                    print(k)
                     if('conv' in k and "kernel" in k):
                         weights.append(torch.tensor(v.transpose((3,2,0,1))))
             
@@ -137,19 +144,22 @@ class ParsingAgent:
         #    print(error)
         #    return None
             
-        qualities, channel_weights = self.process_weights(weights)
+        qualities, channel_weights = self.process_weights(weights, model)
         id = np.expand_dims(np.broadcast_to(model_num, len(channel_weights)),axis=1)
         laymod = np.concatenate((id,np.asarray(channel_weights)),axis=1)
 
         self.index+=1
         return np.asarray(qualities), np.asarray(performance), laymod
 
-    def process_weights(self, weights):
+    def process_weights(self, weights, model):
         qualities = []
         channel_weights = []
 
+        margin = process.get_margin(model, self.dataset)
+        print(margin)
+
         for weight in weights:
-            layer_qualities, layer_weights = process.get_metrics(weight)
+            layer_qualities, layer_weights = process.get_metrics(weight, margin)
             qualities.append(layer_qualities)
             channel_weights.append(layer_weights)
 

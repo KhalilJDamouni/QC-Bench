@@ -1,10 +1,13 @@
 from __future__ import division
 import math
+import torchvision
 import sys
 import random
+import numpy.linalg as LA
 import torch
 import numpy as np
 from nats_bench import create
+import torchvision.transforms as transforms
 from scipy.optimize import minimize_scalar
 from pprint import pprint
 
@@ -123,7 +126,7 @@ def compute_low_rank(tensor: torch.Tensor) -> torch.Tensor:
         condition = 0
         effective_rank = 0
         KG = 0
-    return KG, condition, effective_rank, rank
+    return [KG, condition, effective_rank]
 
 def compute(tensor: torch.Tensor) -> torch.Tensor:
     if tensor.requires_grad:
@@ -153,46 +156,97 @@ def compute(tensor: torch.Tensor) -> torch.Tensor:
         effective_rank = 0
         KG = 0
 
-    return KG, condition, effective_rank
+    return [KG, condition, effective_rank]
 
-def get_metrics(weight):
+def norms_low_rank(tensor):
+    if tensor.requires_grad:
+        tensor = tensor.detach()
+    try:
+        tensor_size = tensor.shape
+        if tensor_size[0] > tensor_size[1]:
+            tensor = tensor.T
+            tensor_size = tensor.shape
+        U_approx, S_approx, V_approx = EVBMF(tensor)
+    except RuntimeError as error:
+        print(error)
+        return None, None, None
+    low_rank_eigen = torch.diag(S_approx).data.cpu().numpy()
+    spec_norm = max(low_rank_eigen)**2
+    fro_norm = LA.norm(tensor,ord='fro')**2
+    #margin = 
+    return None
+
+def norms(weight):
+    #fro_norm = 
+    return None
+
+def get_margin(model, dataset):
+    if "cifar10" in dataset or "CIFAR10" in dataset:
+        mean = [x / 255 for x in [125.3, 123.0, 113.9]]
+        std = [x / 255 for x in [63.0, 62.1, 66.7]]
+        test_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
+        dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=test_transform)
+
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True)
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(device)
+    margins = []
+    model = model.to(device)
+    for data, target in dataloader:
+      data, target = data.to(device), target.to(device)
+      logits = np.asarray(model(data))[1]
+      correct_logit = logits[torch.arange(logits.shape[0]), target].clone()
+      logits[torch.arange(logits.shape[0]), target] = float('-inf')
+      max_other_logit = logits.data.max(1).values  # get the index of the max logits
+      margin = correct_logit - max_other_logit
+      margins.append(margin)
+    print(torch.cat(margins).kthvalue(m // 10)[0])
+    return torch.cat(margins).kthvalue(m // 10)[0]
+
+
+def get_metrics(weight, margin):
     layer_tensor=weight
     tensor_size = layer_tensor.shape
 
+    in_metrics_BE = []
+    out_metrics_BE = []
+    in_metrics_AE = []
+    out_metrics_AE = []
 
     if (len(tensor_size)==4):
         mode_3_unfold = layer_tensor.permute(1, 0, 2, 3)
         mode_3_unfold = torch.reshape(mode_3_unfold, [tensor_size[1], tensor_size[0]*tensor_size[2]*tensor_size[3]])
 
-        in_KG_AE, in_condition_AE, in_ER_AE, in_rank_AE = compute_low_rank(mode_3_unfold)
+        in_metrics_AE.extend(compute_low_rank(mode_3_unfold))
         in_weight_AE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
 
-        in_KG_BE, in_condition_BE, in_ER_BE = compute(mode_3_unfold)
+        in_metrics_BE.extend(compute(mode_3_unfold))
         in_weight_BE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
 
         mode_4_unfold = layer_tensor
         mode_4_unfold = torch.reshape(mode_4_unfold, [tensor_size[0], tensor_size[1]*tensor_size[2]*tensor_size[3]])
 
-        out_KG_AE, out_condition_AE, out_ER_AE, out_rank_AE = compute_low_rank(mode_4_unfold)
+        out_metrics_AE.extend(compute_low_rank(mode_4_unfold))
         out_weight_AE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
 
-        out_KG_BE, out_condition_BE, out_ER_BE = compute(mode_4_unfold)
+        out_metrics_BE.extend(compute(mode_4_unfold))
         out_weight_BE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
     elif (len(tensor_size)==2):
-        in_KG_AE, in_condition_AE, in_ER_AE, in_rank_AE = compute_low_rank(layer_tensor)
+        in_metrics_AE.extend(compute_low_rank(layer_tensor))
         in_weight_AE = min(tensor_size[1],tensor_size[0])
 
-        in_KG_BE, in_condition_BE, in_ER_BE = compute(layer_tensor)
+        in_metrics_BE.extend(compute(layer_tensor))
         in_weight_BE = min(tensor_size[1],tensor_size[0])
 
-        out_KG_AE, out_condition_AE, out_ER_AE, out_rank_AE = in_KG_AE, in_condition_AE, in_ER_AE, in_rank_AE
+        out_metrics_AE.extend(compute_low_rank(layer_tensor))
         out_weight_AE = in_weight_AE
 
-        out_KG_BE, out_condition_BE, out_ER_BE = in_KG_BE, in_condition_BE, in_ER_BE
+        out_metrics_BE.extend(compute(layer_tensor))
         out_weight_BE = in_weight_BE
     else:
         return None
 
-    return [in_KG_BE, out_KG_BE, in_KG_AE, out_KG_AE, in_condition_BE, out_condition_BE, in_condition_AE, out_condition_AE, in_ER_BE, out_ER_BE, in_ER_AE, out_ER_AE], [in_weight_BE, out_weight_BE, in_weight_AE, out_weight_AE]
+    return np.concatenate((in_metrics_BE,out_metrics_BE,in_metrics_AE,out_metrics_AE)), [in_weight_BE, out_weight_BE, in_weight_AE, out_weight_AE]
 
 
