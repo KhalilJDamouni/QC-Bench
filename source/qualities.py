@@ -99,14 +99,10 @@ if __name__ == "__main__":
     #plots
     #plt.subplot(2,1,1)
     #plt.bar(correlationss.keys(),correlationss.values())
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
+
     print(len(aggregates['QE_AE'][3]))
->>>>>>> a93926a9dd64728a6484b76f980cd57f9616b4ee
-=======
+
     print(len(aggregates['QE_AE'][3]))
->>>>>>> a93926a9dd64728a6484b76f980cd57f9616b4ee
     
     #plt.subplot(2,1,2)
     plt.plot(aggregates['QS_BE'][1],aggregates['test_acc'],'ro')
