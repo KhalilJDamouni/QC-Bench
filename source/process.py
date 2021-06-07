@@ -188,7 +188,7 @@ def get_margin(model, dataset):
         dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=test_transform)
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True)
-
+    m = len(dataloader.dataset)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(device)
     margins = []
