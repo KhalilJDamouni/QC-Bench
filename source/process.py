@@ -5,6 +5,7 @@ import sys
 import random
 import numpy.linalg as LA
 import torch
+import time
 import numpy as np
 from nats_bench import create
 import torchvision.transforms as transforms
@@ -158,7 +159,7 @@ def compute(tensor: torch.Tensor) -> torch.Tensor:
 
     return [KG, condition, effective_rank]
 
-def norms_low_rank(tensor):
+def norms_low_rank(tensor, margin):
     if tensor.requires_grad:
         tensor = tensor.detach()
     try:
@@ -173,11 +174,12 @@ def norms_low_rank(tensor):
     low_rank_eigen = torch.diag(S_approx).data.cpu().numpy()
     spec_norm = max(low_rank_eigen)**2
     fro_norm = LA.norm(tensor,ord='fro')**2
-    #margin = 
+    
     return None
 
-def norms(weight):
-    #fro_norm = 
+def norms(tensor, margin):
+    spec_norm = LA.norm(tensor,ord=2)**2
+    fro_norm = LA.norm(tensor,ord='fro')**2
     return None
 
 def get_margin(model, dataset):
@@ -187,12 +189,15 @@ def get_margin(model, dataset):
         test_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
         dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=test_transform)
 
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=512, shuffle=True)
     m = len(dataloader.dataset)
+    print(m)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(device)
     margins = []
+    i = 0
     model = model.to(device)
+    now = time.time()
     for data, target in dataloader:
       data, target = data.to(device), target.to(device)
       logits = np.asarray(model(data))[1]
@@ -200,8 +205,11 @@ def get_margin(model, dataset):
       logits[torch.arange(logits.shape[0]), target] = float('-inf')
       max_other_logit = logits.data.max(1).values  # get the index of the max logits
       margin = correct_logit - max_other_logit
+      margin = margin.clone().detach().cpu()
       margins.append(margin)
-    print(torch.cat(margins).kthvalue(m // 10)[0])
+      print(i)
+      i+=1
+    print(str(time.time()-now))
     return torch.cat(margins).kthvalue(m // 10)[0]
 
 

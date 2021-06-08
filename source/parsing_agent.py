@@ -151,11 +151,12 @@ class ParsingAgent:
         self.index+=1
         return np.asarray(qualities), np.asarray(performance), laymod
 
-    def process_weights(self, weights, model):
+    def process_weights(self, weights, model=None):
         qualities = []
         channel_weights = []
 
-        margin = process.get_margin(model, self.dataset)
+        #margin = process.get_margin(model, self.dataset)
+        margin = 1
         print(margin)
 
         for weight in weights:
