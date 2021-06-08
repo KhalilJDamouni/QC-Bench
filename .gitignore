@@ -5,3 +5,7 @@
 /nas-bench-nlp-release-master
 /demogen
 /.vscode
+/source/outputs
+/source/__pycache__
+source/__pycache__
+source/metrics/data
