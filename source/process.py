@@ -8,6 +8,7 @@ import torch
 import time
 import numpy as np
 from nats_bench import create
+from copy import deepcopy
 import torchvision.transforms as transforms
 from scipy.optimize import minimize_scalar
 from pprint import pprint
@@ -159,7 +160,7 @@ def compute(tensor: torch.Tensor) -> torch.Tensor:
 
     return [KG, condition, effective_rank]
 
-def norms_low_rank(tensor, margin):
+def norms_low_rank(tensor):
     if tensor.requires_grad:
         tensor = tensor.detach()
     try:
@@ -172,17 +173,19 @@ def norms_low_rank(tensor, margin):
         print(error)
         return None, None, None
     low_rank_eigen = torch.diag(S_approx).data.cpu().numpy()
-    spec_norm = max(low_rank_eigen)**2
-    fro_norm = LA.norm(tensor,ord='fro')**2
-    
-    return None
+    if(len(low_rank_eigen)>0):
+        spec_norm = max(low_rank_eigen)
+    else:
+        spec_norm = 0
+    fro_norm = LA.norm(tensor,ord='fro')
+    return [spec_norm, fro_norm]
 
-def norms(tensor, margin):
-    spec_norm = LA.norm(tensor,ord=2)**2
-    fro_norm = LA.norm(tensor,ord='fro')**2
-    return None
+def norms(tensor):
+    spec_norm = LA.norm(tensor,ord=2)
+    fro_norm = LA.norm(tensor,ord='fro')
+    return [spec_norm, fro_norm]
 
-def get_margin(model, dataset):
+def get_dataset_dep(model, dataset):
     if "cifar10" in dataset or "CIFAR10" in dataset:
         mean = [x / 255 for x in [125.3, 123.0, 113.9]]
         std = [x / 255 for x in [63.0, 62.1, 66.7]]
@@ -191,29 +194,39 @@ def get_margin(model, dataset):
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=512, shuffle=True)
     m = len(dataloader.dataset)
-    print(m)
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(device)
     margins = []
-    i = 0
     model = model.to(device)
-    now = time.time()
     for data, target in dataloader:
-      data, target = data.to(device), target.to(device)
-      logits = np.asarray(model(data))[1]
-      correct_logit = logits[torch.arange(logits.shape[0]), target].clone()
-      logits[torch.arange(logits.shape[0]), target] = float('-inf')
-      max_other_logit = logits.data.max(1).values  # get the index of the max logits
-      margin = correct_logit - max_other_logit
-      margin = margin.clone().detach().cpu()
-      margins.append(margin)
-      print(i)
-      i+=1
-    print(str(time.time()-now))
-    return torch.cat(margins).kthvalue(m // 10)[0]
+        shape = data.shape[1:]
+        data, target = data.to(device), target.to(device)
+        logits = np.asarray(model(data))[1]
+        correct_logit = logits[torch.arange(logits.shape[0]), target].clone()
+        logits[torch.arange(logits.shape[0]), target] = float('-inf')
+        max_other_logit = logits.data.max(1).values  # get the index of the max logits
+        margin = correct_logit - max_other_logit
+        margin = margin.clone().detach().cpu()
+        margins.append(margin)
+    margin = torch.cat(margins).kthvalue(m // 10)[0]
+    
+    #path norm
+    model = deepcopy(model)
+    model.eval()
+    for param in model.parameters():
+      if param.requires_grad:
+        param.data.pow_(2)
+    expand = [1]
+    expand.extend(shape)
+    x = torch.ones(expand, device=device)
+    x = model(x)
+    del model
+    x = x[1].clone().detach().cpu()
+    pathnorm = math.sqrt(torch.sum(x))
+
+    return np.asarray([margin,pathnorm,m])
 
 
-def get_metrics(weight, margin):
+def get_metrics(weight):
     layer_tensor=weight
     tensor_size = layer_tensor.shape
 
@@ -222,39 +235,53 @@ def get_metrics(weight, margin):
     in_metrics_AE = []
     out_metrics_AE = []
 
+    type = 0
+
     if (len(tensor_size)==4):
         mode_3_unfold = layer_tensor.permute(1, 0, 2, 3)
         mode_3_unfold = torch.reshape(mode_3_unfold, [tensor_size[1], tensor_size[0]*tensor_size[2]*tensor_size[3]])
 
         in_metrics_AE.extend(compute_low_rank(mode_3_unfold))
+        in_metrics_AE.extend(norms_low_rank(mode_3_unfold))
         in_weight_AE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
 
         in_metrics_BE.extend(compute(mode_3_unfold))
+        in_metrics_BE.extend(norms(mode_3_unfold))
         in_weight_BE = min(tensor_size[1],tensor_size[0] * tensor_size[2] * tensor_size[3])
 
         mode_4_unfold = layer_tensor
         mode_4_unfold = torch.reshape(mode_4_unfold, [tensor_size[0], tensor_size[1]*tensor_size[2]*tensor_size[3]])
 
         out_metrics_AE.extend(compute_low_rank(mode_4_unfold))
+        out_metrics_AE.extend(norms_low_rank(mode_4_unfold))
         out_weight_AE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
 
         out_metrics_BE.extend(compute(mode_4_unfold))
+        out_metrics_BE.extend(norms(mode_4_unfold))
         out_weight_BE = min(tensor_size[0],tensor_size[1] * tensor_size[2] * tensor_size[3])
+
+        type = 4
     elif (len(tensor_size)==2):
         in_metrics_AE.extend(compute_low_rank(layer_tensor))
+        in_metrics_AE.extend(norms_low_rank(layer_tensor))
         in_weight_AE = min(tensor_size[1],tensor_size[0])
 
         in_metrics_BE.extend(compute(layer_tensor))
+        in_metrics_BE.extend(norms(layer_tensor))
         in_weight_BE = min(tensor_size[1],tensor_size[0])
 
         out_metrics_AE.extend(compute_low_rank(layer_tensor))
+        out_metrics_AE.extend(norms_low_rank(layer_tensor))
         out_weight_AE = in_weight_AE
 
         out_metrics_BE.extend(compute(layer_tensor))
+        out_metrics_BE.extend(norms(layer_tensor))
         out_weight_BE = in_weight_BE
+
+        type = 2
     else:
         return None
 
-    return np.concatenate((in_metrics_BE,out_metrics_BE,in_metrics_AE,out_metrics_AE)), [in_weight_BE, out_weight_BE, in_weight_AE, out_weight_AE]
+    return np.concatenate((in_metrics_BE,out_metrics_BE,in_metrics_AE,out_metrics_AE)), [in_weight_BE, out_weight_BE, in_weight_AE, out_weight_AE], type
 
 

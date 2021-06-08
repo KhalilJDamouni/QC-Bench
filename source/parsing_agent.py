@@ -1,6 +1,7 @@
 import sys
 import os
 import tensorflow as tf
+from torch.utils import data
 import process
 import numpy as np
 from nats_bench import create
@@ -143,25 +144,30 @@ class ParsingAgent:
         #    print(type(error))
         #    print(error)
         #    return None
-            
-        qualities, channel_weights = self.process_weights(weights, model)
+
+
+        qualities, channel_weights, layer_type = self.process_weights(weights, model)
         id = np.expand_dims(np.broadcast_to(model_num, len(channel_weights)),axis=1)
-        laymod = np.concatenate((id,np.asarray(channel_weights)),axis=1)
+        layer_type = np.expand_dims(np.broadcast_to(layer_type, len(channel_weights)),axis=1)
+        layer_info = np.concatenate((id,layer_type,np.asarray(channel_weights)),axis=1)
+        
+        try:
+            datamodel_dep = process.get_dataset_dep(model, self.dataset)
+        except:
+            datamodel_dep = np.zeros(3)
+
+        datamodel_dep = np.broadcast_to(datamodel_dep,(len(channel_weights),len(datamodel_dep)))
 
         self.index+=1
-        return np.asarray(qualities), np.asarray(performance), laymod
+        return np.asarray(qualities), datamodel_dep, np.asarray(performance), layer_info
 
     def process_weights(self, weights, model=None):
         qualities = []
         channel_weights = []
 
-        #margin = process.get_margin(model, self.dataset)
-        margin = 1
-        print(margin)
-
         for weight in weights:
-            layer_qualities, layer_weights = process.get_metrics(weight, margin)
+            layer_qualities, layer_weights, layer_type = process.get_metrics(weight)
             qualities.append(layer_qualities)
             channel_weights.append(layer_weights)
 
-        return qualities, channel_weights
+        return qualities, channel_weights, layer_type
