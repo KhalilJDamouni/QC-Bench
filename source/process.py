@@ -1,5 +1,6 @@
 from __future__ import division
 import math
+from torch import nn, optim
 import torchvision
 import sys
 import random
@@ -185,14 +186,39 @@ def norms(tensor):
     fro_norm = LA.norm(tensor,ord='fro')
     return [spec_norm, fro_norm]
 
-def get_dataset_dep(model, dataset):
+class Welford:
+
+    def __init__(self):
+        self.k = torch.tensor([0]).cuda()
+
+    def update(self, newValue):
+        if(self.k==0):
+            self.M = torch.zeros(len(newValue)).cuda()
+            self.m = torch.zeros(len(newValue)).cuda()
+            self.S = torch.zeros(len(newValue)).cuda()
+        self.k += 1
+        delta = newValue - self.m
+        self.m += delta / self.k
+        delta2 = newValue - self.m
+        self.M += delta * delta2
+
+    def finalize(self):
+        if self.k < 2:
+            return float("nan")
+        else:
+            (mean2, variance, sampleVariance) = ((self.m**2).cpu(), (self.M / self.k).cpu(), (self.M / (self.k - 1)).cpu())
+            return (mean2, variance, sampleVariance)
+
+            
+
+def get_dataset_dep(model, dataset, GSNR_params):
     if "cifar10" in dataset or "CIFAR10" in dataset:
         mean = [x / 255 for x in [125.3, 123.0, 113.9]]
         std = [x / 255 for x in [63.0, 62.1, 66.7]]
         test_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
         dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=test_transform)
 
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=512, shuffle=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=512, shuffle=True, num_workers = 0)
     m = len(dataloader.dataset)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     margins = []
@@ -210,20 +236,66 @@ def get_dataset_dep(model, dataset):
     margin = torch.cat(margins).kthvalue(m // 10)[0]
     
     #path norm
-    model = deepcopy(model)
-    model.eval()
-    for param in model.parameters():
+    model1 = deepcopy(model)
+    model1.eval()
+    for param in model1.parameters():
       if param.requires_grad:
         param.data.pow_(2)
     expand = [1]
     expand.extend(shape)
     x = torch.ones(expand, device=device)
-    x = model(x)
-    del model
+    x = model1(x)
+    del model1
     x = x[1].clone().detach().cpu()
+    del x
     pathnorm = math.sqrt(torch.sum(x))
 
-    return np.asarray([margin,pathnorm,m])
+    #gsnr
+    if(GSNR_params[0]):
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers = 0)
+        optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        criterion = nn.CrossEntropyLoss()
+        model.eval()
+
+        slave = Welford()
+        i=0
+        for data, target in dataloader:
+
+            optimizer.zero_grad()
+
+            outputs = model(data.cuda())
+            loss = criterion(outputs[1], target.cuda())
+            loss.backward() #Gradients calculated
+            grad_history = []
+
+            for param in model.parameters():
+                if(param.requires_grad):
+                    grad_history.append(param.grad.flatten())
+            grad_history = torch.cat(grad_history)
+
+            slave.update(grad_history)
+
+            del grad_history
+
+            if(i==GSNR_params[1]):
+                break
+
+            if(i%1000==0):
+                print(i)
+            i+=1
+        
+        mean2, var, svar = slave.finalize()
+        mean2 = mean2[mean2!=0]
+        svar = svar[svar!=0]
+        gsnr = mean2/svar
+        gsnr = torch.mean(gsnr)
+
+    else:
+        gsnr = 0
+
+    del model
+
+    return np.asarray([margin,pathnorm,m,gsnr])
 
 
 def get_metrics(weight):
