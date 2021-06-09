@@ -152,9 +152,10 @@ class ParsingAgent:
         layer_info = np.concatenate((id,layer_type,np.asarray(channel_weights)),axis=1)
         
         try:
-            datamodel_dep = process.get_dataset_dep(model, self.dataset)
-        except:
-            datamodel_dep = np.zeros(3)
+            datamodel_dep = process.get_dataset_dep(model, self.dataset, [1,1000])
+        except Exception as exc:
+            print(exc)
+            datamodel_dep = np.zeros(4)
 
         datamodel_dep = np.broadcast_to(datamodel_dep,(len(channel_weights),len(datamodel_dep)))
 
