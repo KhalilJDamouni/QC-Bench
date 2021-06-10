@@ -80,6 +80,11 @@ if __name__ == "__main__":
     aggregates['test_loss'] = np.mean(data['test_loss'],axis=1)
     aggregates['train_loss'] = np.mean(data['train_loss'],axis=1)
     aggregates['gap'] = np.mean(data['gap'],axis=1)
+    aggregates['prod-of-spec/margin'] = 
+    aggregates['log-sum-of-spec']
+    aggregates['log-sum-of-spec']
+
+
 
     #correlations
     X = ['test_acc','gap']
