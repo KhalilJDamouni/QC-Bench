@@ -30,8 +30,27 @@ def agg(x, L, a=[]):
 def all_aggs(in_chan, out_chan, in_weight, out_weight):
     return np.asarray([agg(np.ma.concatenate((in_chan,out_chan),axis=1),L=i,a=np.ma.concatenate((in_weight,out_weight),axis=1)) for i in range(1,6)])
 
+def sqrtlog(chans, weights):
+    a = np.logical_not(ma.getmaskarray(weights))
+    all = []
+    for i in range(len(chans)):
+        all.append([])
+        print(np.log(np.sqrt(chans[i])))
+        print(chans[i])
+        print(np.sum(a,axis=1))
+        chand = chans[i]*np.sum(a,axis=1)
+        all[i].append(chans[i])
+        all[i].append(chand)
+        all[i].append(np.sqrt(chans[i]))
+        all[i].append(np.sqrt(chand))
+        all[i].append(np.log(chans[i]))
+        all[i].append(np.log(chand))
+        all[i].append(np.log(np.sqrt(chans[i])))
+        all[i].append(np.log(np.sqrt(chand)))
+    return all
+
 if __name__ == "__main__":
-    filename = "results-06-03-2021_14-19-02-DEMOGEN-RESNET_CIFAR10-90"
+    filename = "results-06-01-2021_16-21-19-NATSS-cifar10-90"
     file=Path(str(sys.path[0][0:-7])+"/outputs/"+filename+".csv")
     df = pd.read_csv(file,skip_blank_lines=False)
     data = dict()
@@ -75,15 +94,22 @@ if __name__ == "__main__":
     aggregates['QS_AE'] = all_aggs(data['in_QS_AE'],data['out_QS_AE'],data['in_weight_AE'],data['out_weight_AE'])
     aggregates['QE_BE'] = all_aggs(data['in_ER_BE'],data['out_ER_BE'],data['in_weight_BE'],data['out_weight_BE'])
     aggregates['QE_AE'] = all_aggs(data['in_ER_AE'],data['out_ER_AE'],data['in_weight_AE'],data['out_weight_AE'])
+
+    aggregates['QS_BE'] = sqrtlog(aggregates['QS_BE'],np.ma.concatenate((data['in_weight_BE'],data['out_weight_BE']),axis=1))
+    aggregates['QS_AE'] = sqrtlog(aggregates['QS_AE'],np.ma.concatenate((data['in_weight_AE'],data['out_weight_AE']),axis=1))
+    aggregates['QE_BE'] = sqrtlog(aggregates['QE_BE'],np.ma.concatenate((data['in_weight_BE'],data['out_weight_BE']),axis=1))
+    aggregates['QE_AE'] = sqrtlog(aggregates['QE_AE'],np.ma.concatenate((data['in_weight_AE'],data['out_weight_AE']),axis=1))
+    
     aggregates['test_acc'] = np.mean(data['test_acc'],axis=1)
     aggregates['train_acc'] = np.mean(data['train_acc'],axis=1)
     aggregates['test_loss'] = np.mean(data['test_loss'],axis=1)
     aggregates['train_loss'] = np.mean(data['train_loss'],axis=1)
     aggregates['gap'] = np.mean(data['gap'],axis=1)
-    aggregates['prod-of-spec/margin'] = 
-    aggregates['log-sum-of-spec']
-    aggregates['log-sum-of-spec']
-
+    '''
+    aggregates['prod-of-spec'] = 
+    aggregates['log-sum-of-spec'] = 
+    aggregates['log-sum-of-spec'] = 
+    '''
 
 
     #correlations
@@ -94,8 +120,9 @@ if __name__ == "__main__":
     for x in X:
         for y in Y:
             for i in range(5):
-                correlationsp[y+'_'+x+'_L'+str(i+1)] = abs(stats.pearsonr(aggregates[x], aggregates[y][i])[0])
-                correlationss[y+'_'+x+'_L'+str(i+1)] = abs(stats.spearmanr(aggregates[x], aggregates[y][i])[0])
+                for t in range(8):
+                    correlationsp[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = abs(stats.pearsonr(aggregates[x], aggregates[y][i][t])[0])
+                    correlationss[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = abs(stats.spearmanr(aggregates[x], aggregates[y][i][t])[0])
     #what about kendall rank?
     correlations = {'pearson':correlationsp,'spearman':correlationss}
     print(correlations)
@@ -103,14 +130,10 @@ if __name__ == "__main__":
 
     #plots
     #plt.subplot(2,1,1)
-    #plt.bar(correlationss.keys(),correlationss.values())
+    plt.bar(correlationss.keys(),correlationss.values())
 
-    print(len(aggregates['QE_AE'][3]))
-
-    print(len(aggregates['QE_AE'][3]))
-    
     #plt.subplot(2,1,2)
-    plt.plot(aggregates['QS_BE'][1],aggregates['test_acc'],'ro')
+    #plt.plot(aggregates['QS_BE'][2][4],aggregates['test_acc'],'ro')
     #m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
     #plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
     plt.show()

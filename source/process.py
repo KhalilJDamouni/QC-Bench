@@ -289,8 +289,8 @@ def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
     for data, target in dataloader:
         shape = data.shape[1:]
         break
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = model.to(device)
+    #device = "cuda" if torch.cuda.is_available() else "cpu"
+    #model = model.to(device)
 
     if(margin_param):
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=256, shuffle=True, num_workers = 0)
@@ -319,10 +319,10 @@ def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
         param.data.pow_(2)
     expand = [1]
     expand.extend(shape)
-    x = torch.ones(expand, device=device)
+    x = torch.ones(expand)
     x = model1(x)
     del model1
-    x = x[1].clone().detach().cpu()
+    x = x[1].clone().detach()
     pathnorm = math.sqrt(torch.sum(x))
 
     #gsnr
