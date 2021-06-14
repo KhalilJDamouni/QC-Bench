@@ -28,7 +28,11 @@ if __name__ == "__main__":
 
     
     while (agent.index < len(agent.sspace)):
-        qualities, datamodel_dep, performance, layer_info = agent.get_model()
+        try:
+            qualities, datamodel_dep, performance, layer_info = agent.get_model()
+        except Exception as err:
+            print(err)
+            print("Skipping Meta")
         if qualities.shape[0] != 0:
             
             print(str(agent.index)+'/'+str(len(agent.sspace)))
