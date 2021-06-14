@@ -30,16 +30,15 @@ if __name__ == "__main__":
     while (agent.index < len(agent.sspace)):
         try:
             qualities, datamodel_dep, performance, layer_info = agent.get_model()
+            if qualities.shape[0] != 0:
+                
+                print(str(agent.index)+'/'+str(len(agent.sspace)))
+
+                performance = np.broadcast_to(performance,(qualities.shape[0],performance.shape[0]))
+                to_write = np.concatenate((performance, qualities, datamodel_dep, layer_info), axis=1)
+                save.write(file_name,to_write)
         except Exception as err:
+            print("Skipping meta")
             print(err)
-            print("Skipping Meta")
-        if qualities.shape[0] != 0:
-            
-            print(str(agent.index)+'/'+str(len(agent.sspace)))
-
-            performance = np.broadcast_to(performance,(qualities.shape[0],performance.shape[0]))
-            to_write = np.concatenate((performance, qualities, datamodel_dep, layer_info), axis=1)
-            save.write(file_name,to_write)
-
 
   
