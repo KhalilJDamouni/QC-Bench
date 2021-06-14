@@ -38,6 +38,7 @@ if __name__ == "__main__":
                 to_write = np.concatenate((performance, qualities, datamodel_dep, layer_info), axis=1)
                 save.write(file_name,to_write)
         except Exception as err:
+            agent.index += 1
             print("Skipping meta")
             print(err)
 
