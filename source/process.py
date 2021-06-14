@@ -1,4 +1,5 @@
 from __future__ import division
+from contextlib import contextmanager
 import math
 from torch import nn, optim
 import torchvision
@@ -209,31 +210,106 @@ class Welford:
             (mean2, variance, sampleVariance) = ((self.m**2).cpu(), (self.M / self.k).cpu(), (self.M / (self.k - 1)).cpu())
             return (mean2, variance, sampleVariance)
 
-            
+@contextmanager
+def _perturbed_model(
+  model,
+  sigma: float = 1,
+  rng = torch.Generator(),
+  magnitude_eps = None
+):
+  device = next(model.parameters()).device
+  if magnitude_eps is not None:
+    noise = [torch.normal(0,sigma**2 * torch.abs(p) ** 2 + magnitude_eps ** 2, generator=rng) for p in model.parameters()]
+  else:
+    noise = [torch.normal(0,sigma**2,p.shape, generator=rng).to(device) for p in model.parameters()]
+  model = deepcopy(model)
+  try:
+    [p.add_(n) for p,n in zip(model.parameters(), noise)]
+    yield model
+  finally:
+    [p.sub_(n) for p,n in zip(model.parameters(), noise)]
+    del model     
 
-def get_dataset_dep(model, dataset, GSNR_params):
+@torch.no_grad()
+def _pacbayes_sigma(
+  model,
+  dataloader,
+  accuracy: float,
+  seed: int,
+  magnitude_eps = None,
+  search_depth: int = 4,
+  montecarlo_samples: int = 10,
+  accuracy_displacement: float = 0.1,
+  displacement_tolerance: float = 1e-2,
+) -> float:
+  lower, upper = 0, 2
+  sigma = 1
+
+  BIG_NUMBER = 10348628753
+  device = next(model.parameters()).device
+  rng = torch.Generator(device=device) if magnitude_eps is not None else torch.Generator()
+  rng.manual_seed(BIG_NUMBER + seed)
+
+  for __ in range(search_depth):
+    sigma = (lower + upper) / 2
+    accuracy_samples = []
+    for _ in range(montecarlo_samples):
+      with _perturbed_model(model, sigma, rng, magnitude_eps) as p_model:
+        loss_estimate = 0
+        for data, target in dataloader:
+            data, target = data.cuda(), target.cuda()
+            logits = p_model(data)
+            pred = (logits[1]).data.max(1, keepdim=True)[1]  # get the index of the max logits
+            batch_correct = pred.eq(target.data.view_as(pred)).type(torch.FloatTensor).cpu()
+            loss_estimate += batch_correct.sum()
+        loss_estimate /= len(dataloader.dataset)
+        accuracy_samples.append(loss_estimate)
+        print("[",__,_, loss_estimate, "]")
+    displacement = abs(np.mean(accuracy_samples) - accuracy)
+    if abs(displacement - accuracy_displacement) < displacement_tolerance:
+      break
+    elif displacement > accuracy_displacement:
+      # Too much perturbation
+      upper = sigma
+    else:
+      # Not perturbed enough to reach target displacement
+      lower = sigma
+  return sigma
+
+def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
+
     if "cifar10" in dataset or "CIFAR10" in dataset:
         mean = [x / 255 for x in [125.3, 123.0, 113.9]]
         std = [x / 255 for x in [63.0, 62.1, 66.7]]
         test_transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
         dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=test_transform)
 
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=512, shuffle=True, num_workers = 0)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=256, shuffle=True, num_workers = 0)
     m = len(dataloader.dataset)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    margins = []
-    model = model.to(device)
     for data, target in dataloader:
         shape = data.shape[1:]
-        data, target = data.to(device), target.to(device)
-        logits = np.asarray(model(data))[1]
-        correct_logit = logits[torch.arange(logits.shape[0]), target].clone()
-        logits[torch.arange(logits.shape[0]), target] = float('-inf')
-        max_other_logit = logits.data.max(1).values  # get the index of the max logits
-        margin = correct_logit - max_other_logit
-        margin = margin.clone().detach().cpu()
-        margins.append(margin)
-    margin = torch.cat(margins).kthvalue(m // 10)[0]
+        break
+    #device = "cuda" if torch.cuda.is_available() else "cpu"
+    #model = model.to(device)
+
+    if(margin_param):
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=256, shuffle=True, num_workers = 0)
+        hit = torch.tensor([0])
+        margins = []
+        for data, target in dataloader:
+            data, target = data.to(device), target.to(device)
+            logits = np.asarray(model(data))[1]
+            hit += torch.sum(torch.argmax(logits,axis=1) == target).cpu()
+            correct_logit = logits[torch.arange(logits.shape[0]), target].clone()
+            logits[torch.arange(logits.shape[0]), target] = float('-inf')
+            max_other_logit = logits.data.max(1).values  # get the index of the max logits
+            margin = correct_logit - max_other_logit
+            margin = margin.clone().detach().cpu()
+            margins.append(margin)
+        margin = torch.cat(margins).kthvalue(m // 10)[0]
+        acc = hit/m
+    else:
+        margin =0
     
     #path norm
     model1 = deepcopy(model)
@@ -243,11 +319,10 @@ def get_dataset_dep(model, dataset, GSNR_params):
         param.data.pow_(2)
     expand = [1]
     expand.extend(shape)
-    x = torch.ones(expand, device=device)
+    x = torch.ones(expand)
     x = model1(x)
     del model1
-    x = x[1].clone().detach().cpu()
-    del x
+    x = x[1].clone().detach()
     pathnorm = math.sqrt(torch.sum(x))
 
     #gsnr
@@ -257,7 +332,7 @@ def get_dataset_dep(model, dataset, GSNR_params):
         criterion = nn.CrossEntropyLoss()
         model.eval()
 
-        slave = Welford()
+        child = Welford()
         i=0
         for data, target in dataloader:
 
@@ -273,7 +348,7 @@ def get_dataset_dep(model, dataset, GSNR_params):
                     grad_history.append(param.grad.flatten())
             grad_history = torch.cat(grad_history)
 
-            slave.update(grad_history)
+            child.update(grad_history)
 
             del grad_history
 
@@ -284,7 +359,8 @@ def get_dataset_dep(model, dataset, GSNR_params):
                 print(i)
             i+=1
         
-        mean2, var, svar = slave.finalize()
+        mean2, var, svar = child.finalize()
+        del(child)
         mean2 = mean2[mean2!=0]
         svar = svar[svar!=0]
         gsnr = mean2/svar
@@ -293,9 +369,24 @@ def get_dataset_dep(model, dataset, GSNR_params):
     else:
         gsnr = 0
 
-    del model
 
-    return np.asarray([margin,pathnorm,m,gsnr])
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=512, shuffle=True, num_workers = 0)
+    #sigma
+    if pac_params[0][0] == 1:
+        seed = 0
+        pac_sigma = _pacbayes_sigma(model, dataloader, acc, seed, search_depth=pac_params[1])
+    else:
+        pac_sigma = 0
+    #pac sigma
+    if(pac_params[0][1]==1):
+        seed = 0
+        mag_eps = 1e-3
+        mag_pac_sigma = _pacbayes_sigma(model, dataloader, acc, seed, magnitude_eps=mag_eps, search_depth=pac_params[1])
+    else:
+        mag_pac_sigma = 0
+
+    model = model.cpu()
+    return np.asarray([margin,pathnorm,m,gsnr,pac_sigma,mag_pac_sigma])
 
 
 def get_metrics(weight):
