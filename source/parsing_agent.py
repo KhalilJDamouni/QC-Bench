@@ -64,14 +64,29 @@ class ParsingAgent:
 
             model_num = int((model_path.split(os.path.sep)[-1]).split('.')[0])
 
-            weights = self.api.get_net_param(model_num, self.dataset, hp=self.hp, seed=None)
+            weightdict = self.api.get_net_param(model_num, self.dataset, hp=self.hp, seed=None)
 
             config = self.api.get_net_config(model_num,self.dataset)
             model = get_cell_based_tiny_net(config)
-            model.load_state_dict(next(iter(weights.values())))
-
-            weights = list((list(weights.values())[0]).values())
+            model.load_state_dict(next(iter(weightdict.values())))
+            #print(model)
+            
+            for weight in list(weightdict.values())[0]:
+                print(weight)
+            weights = list((list(weightdict.values())[0]).values())
             weights = [weight for weight in weights if (len(weight.shape)==4)]
+            '''
+            connecs = []
+            for key, value in list(weightdict.values())[0]:
+                key = key.split('.')
+                if(len(value.shape)==4 and 'layers' in key):
+                    connec = 0
+                    if(key[3]==0):
+                        connec = '0'
+                    elif(key[3]==1):
+                        connec = '01'
+                    connecs.append(key[1]+'.'+)
+            '''
 
             performance = self.api.get_more_info(model_num, self.dataset, hp=self.hp, is_random=False)
             performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
