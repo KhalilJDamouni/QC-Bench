@@ -71,8 +71,8 @@ class ParsingAgent:
             model.load_state_dict(next(iter(weightdict.values())))
             #print(model)
             
-            for weight in list(weightdict.values())[0]:
-                print(weight)
+            #for weight in list(weightdict.values())[0]:
+                #print(weight)
             weights = list((list(weightdict.values())[0]).values())
             weights = [weight for weight in weights if (len(weight.shape)==4)]
             '''

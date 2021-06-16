@@ -179,7 +179,8 @@ def norms_low_rank(tensor):
         spec_norm = max(low_rank_eigen)
     else:
         spec_norm = 0
-    fro_norm = LA.norm(tensor,ord='fro')
+    low_rank_tensor = np.dot(np.dot(U_approx,S_approx),V_approx.T)
+    fro_norm = LA.norm(low_rank_tensor,ord='fro')
     return [spec_norm, fro_norm]
 
 def norms(tensor):
