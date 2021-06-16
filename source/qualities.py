@@ -35,8 +35,6 @@ def sqrtlog(chans, weights):
     all = []
     for i in range(len(chans)):
         all.append([])
-        print(np.log(np.sqrt(chans[i])))
-        print(chans[i])
         print(np.sum(a,axis=1))
         chand = chans[i]*np.sum(a,axis=1)
         all[i].append(chans[i])
@@ -139,10 +137,10 @@ if __name__ == "__main__":
 
     #plots
     #plt.subplot(2,1,1)
-    plt.bar(correlationsp.keys(),correlationsp.values())
+    #plt.bar(correlationsp.keys(),correlationsp.values())
 
     #plt.subplot(2,1,2)
-    #plt.plot(aggregates['fro_BE'][1][6],aggregates['gap'],'ro')
+    plt.plot(aggregates['fro_BE'][1][6],aggregates['test_acc'],'ro')
     #m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
     #plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
     plt.show()
