@@ -33,8 +33,16 @@ class ParsingAgent:
             self.api = create(sys.path[0][0:-7]+'/models/NATSS', 'sss', fast_mode=True, verbose=False)
             self.sspace = glob.glob(sys.path[0][0:-7]+'/models/NATSS/*')
             #Compute Canada Directories
-            #
-            #
+            
+        # if(bench == 'NATSS'):
+        #     self.api = create('/home/damounik/scratch/NATS-sss-v1_0-50262-full', 'sss', fast_mode=True, verbose=False)
+        #     self.sspace = glob.glob('/home/damounik/scratch/NATS-sss-v1_0-50262-full/*')
+
+        # if(bench == 'NATST'):
+        #     #download dataset?
+        #     self.api = create('/home/damounik/projects/def-plato/damounik/QC-Bench/QC-Bench/models/NATST/NATS-tss-v1_0-3ffb9-full', 'tss', fast_mode=True, verbose=False)
+        #     self.sspace = glob.glob('/home/damounik/projects/def-plato/damounik/QC-Bench/QC-Bench/models/NATST/NATS-tss-v1_0-3ffb9-full/*')
+
 
 
         if(bench == 'NATST'):
@@ -42,7 +50,7 @@ class ParsingAgent:
             self.api = create(sys.path[0][0:-7]+'/models/NATST', 'tss', fast_mode=True, verbose=False)
             self.sspace = glob.glob(sys.path[0][0:-7]+'/models/NATST/*')
             #Compute Canada Directories
-            #
+            #~/projects/def-plato/damounik/QC-Bench/QC-Bench/models/NATST/NATS-tss-v1_0-3ffb9-full/
             #
         if(bench == 'DEMOGEN'):
             self.sspace = []
