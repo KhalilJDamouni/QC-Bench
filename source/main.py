@@ -9,7 +9,7 @@ import torch
 
 if __name__ == "__main__":
     benchmark = 'NATSS' #from NATSS, NATST, NAS101, NAS201, DEMOGEN, NLP, zenNET
-    dataset = 'cifar10' #For NATs -> ImageNet16-120, cifar10, cifar100
+    dataset = 'cifar100' #For NATs -> ImageNet16-120, cifar10, cifar100
                                 #For DEMOGEN -> NIN_CIFAR10, RESNET_CIFAR10, RESNET_CIFAR100
                                 #For zenNet -> CIFAR10, CIFAR100, ImageNet
     hp = '90'
@@ -28,18 +28,18 @@ if __name__ == "__main__":
 
     
     while (agent.index < len(agent.sspace)):
-        try:
-            qualities, datamodel_dep, performance, layer_info = agent.get_model()
-            if qualities.shape[0] != 0:
-                
-                print(str(agent.index)+'/'+str(len(agent.sspace)))
+        #try:
+        qualities, datamodel_dep, performance, layer_info = agent.get_model()
+        if qualities.shape[0] != 0:
+            
+            print(str(agent.index)+'/'+str(len(agent.sspace)))
 
-                performance = np.broadcast_to(performance,(qualities.shape[0],performance.shape[0]))
-                to_write = np.concatenate((performance, qualities, datamodel_dep, layer_info), axis=1)
-                save.write(file_name,to_write)
-        except Exception as err:
-            agent.index += 1
-            print("Skipping meta")
-            print(err)
+            performance = np.broadcast_to(performance,(qualities.shape[0],performance.shape[0]))
+            to_write = np.concatenate((performance, qualities, datamodel_dep, layer_info), axis=1)
+            save.write(file_name,to_write)
+        #except Exception as err:
+            #agent.index += 1
+            #print("Skipping meta")
+            #print(err)
 
   

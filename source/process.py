@@ -278,7 +278,7 @@ def _pacbayes_sigma(
   return sigma
 
 def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
-
+    '''
     if "cifar10" in dataset or "CIFAR10" in dataset:
         mean = [x / 255 for x in [125.3, 123.0, 113.9]]
         std = [x / 255 for x in [63.0, 62.1, 66.7]]
@@ -286,13 +286,14 @@ def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
         dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=test_transform)
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=256, shuffle=True, num_workers = 0)
-    m = len(dataloader.dataset)
     for data, target in dataloader:
         shape = data.shape[1:]
         break
+    '''
+    shape = (3, 32, 32)
     #device = "cuda" if torch.cuda.is_available() else "cpu"
     #model = model.to(device)
-
+    '''
     if(margin_param):
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=256, shuffle=True, num_workers = 0)
         hit = torch.tensor([0])
@@ -311,7 +312,7 @@ def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
         acc = hit/m
     else:
         margin =0
-    
+    '''
     #path norm
     model1 = deepcopy(model)
     model1.eval()
@@ -325,7 +326,7 @@ def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
     del model1
     x = x[1].clone().detach()
     pathnorm = math.sqrt(torch.sum(x))
-
+    '''
     #gsnr
     if(GSNR_params[0]):
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers = 0)
@@ -385,9 +386,9 @@ def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
         mag_pac_sigma = _pacbayes_sigma(model, dataloader, acc, seed, magnitude_eps=mag_eps, search_depth=pac_params[1])
     else:
         mag_pac_sigma = 0
-
+    '''
     model = model.cpu()
-    return np.asarray([pathnorm,m])
+    return np.asarray([pathnorm])
 
 
 def get_metrics(weight):
