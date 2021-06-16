@@ -32,12 +32,18 @@ class ParsingAgent:
             #download dataset?
             self.api = create(sys.path[0][0:-7]+'/models/NATSS', 'sss', fast_mode=True, verbose=False)
             self.sspace = glob.glob(sys.path[0][0:-7]+'/models/NATSS/*')
+            #Compute Canada Directories
+            #
+            #
+
 
         if(bench == 'NATST'):
             #download dataset?
             self.api = create(sys.path[0][0:-7]+'/models/NATST', 'tss', fast_mode=True, verbose=False)
             self.sspace = glob.glob(sys.path[0][0:-7]+'/models/NATST/*')
-
+            #Compute Canada Directories
+            #
+            #
         if(bench == 'DEMOGEN'):
             self.sspace = []
             self.sspace.extend(glob.glob(sys.path[0][0:-7]+"/models/DEMOGEN/ydjiang/experimental_results/model_dataset/"+self.dataset+"/*"))
