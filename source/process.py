@@ -387,7 +387,7 @@ def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
         mag_pac_sigma = 0
 
     model = model.cpu()
-    return np.asarray([margin,pathnorm,m,gsnr,pac_sigma,mag_pac_sigma])
+    return np.asarray([pathnorm,m])
 
 
 def get_metrics(weight):
