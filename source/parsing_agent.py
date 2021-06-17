@@ -1,6 +1,7 @@
+import collections
 import sys
 import os
-import tensorflow as tf
+#import tensorflow as tf
 from torch.utils import data
 import process
 import numpy as np
@@ -74,6 +75,7 @@ class ParsingAgent:
     def get_model(self):
         #try:
         if(self.bench[0:-1] == 'NATS'):
+            self.api.arch2infos_dict = collections.OrderedDict()
             model_path = self.sspace[self.index]
 
             model_num = int((model_path.split(os.path.sep)[-1]).split('.')[0])
@@ -106,6 +108,8 @@ class ParsingAgent:
             performance = [performance['test-accuracy']/100,performance['test-loss'],performance['train-accuracy']/100,performance['train-loss'],performance['test-accuracy']/100-performance['train-accuracy']/100]
 
         if(self.bench == 'DEMOGEN'):
+            print("demo")
+            '''
             with tf.compat.v1.Session() as sess:
                 #Get Model Number
                 model_num = self.index
@@ -133,7 +137,7 @@ class ParsingAgent:
                 train_data = json.load(read_file)
             
             performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
-            
+            '''
         if(self.bench == 'NLP'):
             model_num = self.index
             print("Model: ", model_num)
@@ -187,6 +191,8 @@ class ParsingAgent:
             #datamodel_dep = np.zeros(4)
 
         datamodel_dep = np.broadcast_to(datamodel_dep,(len(channel_weights),len(datamodel_dep)))
+
+        del model
 
         self.index+=1
         return np.asarray(qualities), datamodel_dep, np.asarray(performance), layer_info

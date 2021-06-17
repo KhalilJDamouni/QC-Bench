@@ -35,7 +35,6 @@ def sqrtlog(chans, weights):
     all = []
     for i in range(len(chans)):
         all.append([])
-        print(np.sum(a,axis=1))
         chand = chans[i]*np.sum(a,axis=1)
         all[i].append(chans[i])
         all[i].append(chand)
@@ -58,28 +57,38 @@ if __name__ == "__main__":
 
     zero_models = []
 
+    idx = list(np.where(pd.isna(df["model_id"]))[0])
+    idxcopy = idx
+    idx = idx - np.arange(0,len(idx),1)
+    lenidx = np.append(idx,len(df["model_id"])-len(idx))
+    lenidx = np.insert(lenidx,0,0)
+    maxLength = np.max(np.abs(np.diff(lenidx)))
     for key in list(df.keys()):
-        idx = list(np.where(pd.isna(df[key]))[0])
-        idx = idx - np.arange(0,len(idx),1)
-        data[key] = df[key].dropna(axis=0)
+        idxx = list(np.where(pd.isna(df[key]))[0])
+        idxx = list(set(idxcopy) ^ set(idxx))
+        data[key] = df[key]
+        datacopy = data[key]
+        data[key].loc[idxx] = 0
+        data[key] = data[key].dropna(axis=0)
         data[key] = np.array_split(data[key],idx)
-        idx = np.append(idx,len(df[key])-len(idx))
-        idx = np.insert(idx,0,0)
-        maxLength = np.max(np.abs(np.diff(idx)))
+        
         for i in range(len(data[key])):
-            #normalize all model sizes
+            #equalize all model sizes
+            prevlen = len(data[key][i])
             data[key][i] = np.append(data[key][i],(np.zeros((maxLength-len(data[key][i])))))
             #delete zero models
             num_non_zero = np.sum(data[key][i]!=0)
             threshold = 1
             if(num_non_zero<threshold):
+                #print(key,str(i),num_non_zero,prevlen)
                 zero_models.append(i)
         data[key] = np.asarray(data[key])
         
+    zero_models = list(set(zero_models))
     print("zero models deleted: "+str(len(zero_models)))
     for key in list(data.keys()):
         data[key] = np.delete(data[key],zero_models,axis=0)
-        data[key] = ma.masked_array(data[key], mask=(data[key]==0))
+        data[key] = ma.masked_array(data[key], mask=(data[key]==0.))
     
     data['in_QS_BE'] = np.arctan2(data['in_S_BE'],(1-1/data['in_C_BE']))
     data['out_QS_BE'] = np.arctan2(data['out_S_BE'],(1-1/data['out_C_BE']))
@@ -101,12 +110,12 @@ if __name__ == "__main__":
     aggregates['spec_BE'] = all_aggs(data['in_spec_BE'],data['out_spec_BE'],data['in_weight_BE'],data['out_weight_BE'])
     aggregates['spec_AE'] = all_aggs(data['in_spec_AE'],data['out_spec_AE'],data['in_weight_AE'],data['out_weight_AE'])
     aggregates['fro_BE'] = all_aggs(data['in_fro_BE'],data['out_fro_BE'],data['in_weight_BE'],data['out_weight_BE'])
-    #aggregates['fro_AE'] = all_aggs(data['in_fro_AE'],data['out_fro_AE'],data['in_weight_AE'],data['out_weight_AE'])
+    aggregates['fro_AE'] = all_aggs(data['in_fro_AE'],data['out_fro_AE'],data['in_weight_AE'],data['out_weight_AE'])
 
     aggregates['spec_BE'] = sqrtlog(aggregates['spec_BE'],np.ma.concatenate((data['in_weight_BE'],data['out_weight_BE']),axis=1))
     aggregates['spec_AE'] = sqrtlog(aggregates['spec_AE'],np.ma.concatenate((data['in_weight_AE'],data['out_weight_AE']),axis=1))
     aggregates['fro_BE'] = sqrtlog(aggregates['fro_BE'],np.ma.concatenate((data['in_weight_BE'],data['out_weight_BE']),axis=1))
-    #aggregates['fro_AE'] = sqrtlog(aggregates['fro_AE'],np.ma.concatenate((data['in_weight_AE'],data['out_weight_AE']),axis=1))
+    aggregates['fro_AE'] = sqrtlog(aggregates['fro_AE'],np.ma.concatenate((data['in_weight_AE'],data['out_weight_AE']),axis=1))
 
     aggregates['path'] = np.mean(data['path'],axis=1)
 
@@ -120,7 +129,7 @@ if __name__ == "__main__":
 
     #correlations
     X = ['test_acc','gap']
-    Y = ['QS_BE','QS_AE','QE_BE','QE_AE','spec_BE','spec_AE','fro_BE']
+    Y = ['QS_BE','QS_AE','QE_BE','QE_AE','spec_BE','spec_AE','fro_BE','fro_AE']
     correlationsp = dict()
     correlationss = dict()
     for x in X:
@@ -138,9 +147,8 @@ if __name__ == "__main__":
     #plots
     #plt.subplot(2,1,1)
     #plt.bar(correlationsp.keys(),correlationsp.values())
-
     #plt.subplot(2,1,2)
-    plt.plot(aggregates['fro_BE'][1][6],aggregates['test_acc'],'ro')
+    plt.plot(aggregates['fro_AE'][1][0],aggregates['test_acc'],'ro')
     #m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
     #plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
     plt.show()
