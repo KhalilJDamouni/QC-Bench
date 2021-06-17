@@ -5,7 +5,6 @@ import json
 #import tensorflow as tf
 import glob
 import torch
-from guppy import hpy
 
 
 
@@ -39,8 +38,6 @@ if __name__ == "__main__":
             performance = np.broadcast_to(performance,(qualities.shape[0],performance.shape[0]))
             to_write = np.concatenate((performance, qualities, datamodel_dep, layer_info), axis=1)
             save.write(file_name,to_write)
-            h = hpy()
-            print(h.heap())
         #except Exception as err:
             #agent.index += 1
             #print("Skipping meta")
