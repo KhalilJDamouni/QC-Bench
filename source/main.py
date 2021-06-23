@@ -10,7 +10,7 @@ import torch
 
 if __name__ == "__main__":
     benchmark = 'NATSS' #from NATSS, NATST, NAS101, NAS201, DEMOGEN, NLP, zenNET
-    dataset = 'cifar100' #For NATs -> ImageNet16-120, cifar10, cifar100
+    dataset = 'cifar10' #For NATs -> ImageNet16-120, cifar10, cifar100
                                 #For DEMOGEN -> NIN_CIFAR10, RESNET_CIFAR10, RESNET_CIFAR100
                                 #For zenNet -> CIFAR10, CIFAR100, ImageNet
     hp = '90'
