@@ -149,6 +149,6 @@ if __name__ == "__main__":
     #plt.bar(correlationsp.keys(),correlationsp.values())
     #plt.subplot(2,1,2)
     plt.plot(aggregates['fro_AE'][1][0],aggregates['test_acc'],'ro')
-    #m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
-    #plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
+    m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
+    plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
     plt.show()

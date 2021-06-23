@@ -85,10 +85,11 @@ class ParsingAgent:
             config = self.api.get_net_config(model_num,self.dataset)
             model = get_cell_based_tiny_net(config)
             model.load_state_dict(next(iter(weightdict.values())))
-            #print(model)
+            print(model)
             
-            #for weight in list(weightdict.values())[0]:
-                #print(weight)
+            '''for weight in list(model.parameters()):
+                print(weight)
+                '''
             weights = list((list(weightdict.values())[0]).values())
             weights = [weight for weight in weights if (len(weight.shape)==4)]
             '''
