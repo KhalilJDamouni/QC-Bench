@@ -53,20 +53,24 @@ class ParsingAgent:
             #Compute Canada Directories
             #~/projects/def-plato/damounik/QC-Bench/QC-Bench/models/NATST/NATS-tss-v1_0-3ffb9-full/
             #
-        if(bench == 'DEMOGEN'):
+        
+        elif(bench == 'DEMOGEN'):
             self.sspace = []
             self.sspace.extend(glob.glob(sys.path[0][0:-7]+"/models/DEMOGEN/ydjiang/experimental_results/model_dataset/"+self.dataset+"/*"))
             #print("Folders: ", self.sspace)
 
 
-        if(bench == 'NLP'):
+        elif(bench == 'NLP'):
             self.sspace = glob.glob("../models/NAS-Bench-NLP/*")
             #print('Folders: ', self.sspace)
 
-        if(bench == "zenNET"):
+        elif(bench == "zenNET"):
             self.sspace = glob.glob("../models/zenNAS/" + self.dataset + "/*")
             print('Folder: ', self.sspace)
 
+        elif(bench == 'LilJon'):
+            self.sspace = glob.glob(sys.path[0][0:-7]+"/models/LilJon/raw/*_" + self.dataset + "_epoch_" + self.hp + ".pth.tar")
+            print('Folder: ', self.sspace)
 
         if(new != 1):
             self.index = start
@@ -139,6 +143,7 @@ class ParsingAgent:
             
             performance = [eval_data["Accuracy"], eval_data["loss"], train_data["Accuracy"], train_data["loss"], eval_data["Accuracy"] - train_data["Accuracy"]]
             '''
+        
         if(self.bench == 'NLP'):
             model_num = self.index
             print("Model: ", model_num)
@@ -172,6 +177,27 @@ class ParsingAgent:
 
             #Get Performance
             performance = [model['top1_acc'], 0, 0, 0, 0]
+
+        if(self.bench == 'LilJon'):
+            model_num = self.sspace[self.index].split("NIN")[1][0:5]
+            print("Model: ", model_num)
+
+            #Get Model
+            model = torch.load(self.sspace[self.index])
+
+            #Get Weights
+            weights = []
+            for key in model["state_dict_network"].keys():
+                if(len(model["state_dict_network"][key].shape) == 4 and ('onv' in key or 'down' in key)):
+                    #print(key, " : ")#, model["state_dict"][key].shape)
+                    weights.append(model["state_dict_network"][key])
+
+            #Test_acc, Test_loss, Train_acc, Train_loss, Test_acc - Train_acc
+            performance = [model["performance_statistics"]['test_acc1_epoch_' + self.hp] ,  
+                           model["performance_statistics"]['test_loss_epoch_' + self.hp] ,  
+                           model["performance_statistics"]['train_acc1_epoch_' + self.hp], 
+                           model["performance_statistics"]['train_loss_epoch_' + self.hp], 
+                           model["performance_statistics"]['test_acc1_epoch_' + self.hp] - model["performance_statistics"]['train_acc1_epoch_' + self.hp]]
 
 
         #except Exception as error:

@@ -10,3 +10,6 @@
 source/__pycache__
 source/metrics/data
 source/metrics/robust-generalization-measures
+source/config_utils
+source/figures
+source/loadmodels
