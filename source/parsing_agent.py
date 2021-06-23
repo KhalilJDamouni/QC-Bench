@@ -67,11 +67,9 @@ class ParsingAgent:
 
         elif(bench == "zenNET"):
             self.sspace = glob.glob("../models/zenNAS/" + self.dataset + "/*")
-            print('Folder: ', self.sspace)
 
         elif(bench == 'LilJon'):
             self.sspace = glob.glob(sys.path[0][0:-7]+"/models/LilJon/raw/*_" + self.dataset + "_epoch_" + self.hp + ".pth.tar")
-            print('Folder: ', self.sspace)
 
         if(new != 1):
             self.index = start
@@ -202,6 +200,7 @@ class ParsingAgent:
             
             model = NIN(self.sspace[self.index].split('_')[-9][-5:])
             model.load_state_dict(model_info["state_dict_network"])
+            del(model_info)
 
         #except Exception as error:
         #    print(type(error))
