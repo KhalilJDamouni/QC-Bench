@@ -69,7 +69,7 @@ class ParsingAgent:
             print('Folder: ', self.sspace)
 
         elif(bench == 'LilJon'):
-            self.sspace = glob.glob("../models/LilJon/*_" + self.dataset + "_epoch_" + self.hp + ".pth.tar")
+            self.sspace = glob.glob(sys.path[0][0:-7]+"/models/LilJon/raw/*_" + self.dataset + "_epoch_" + self.hp + ".pth.tar")
             print('Folder: ', self.sspace)
 
         if(new != 1):
@@ -182,7 +182,7 @@ class ParsingAgent:
             print("Model: ", model_num)
 
             #Get Model
-            model = torch.loadd(self.sspace[self.index])
+            model = torch.load(self.sspace[self.index])
 
             #Get Weights
             weights = []
@@ -192,11 +192,11 @@ class ParsingAgent:
                     weights.append(model["state_dict_network"][key])
 
             #Test_acc, Test_loss, Train_acc, Train_loss, Test_acc - Train_acc
-            performance = [model["performance_statistics"]['test_acc1_epoch_' + hp] ,  
-                           model["performance_statistics"]['test_loss_epoch_' + hp] ,  
-                           model["performance_statistics"]['train_acc1_epoch_' + hp], 
-                           model["performance_statistics"]['train_loss_epoch_' + hp], 
-                           model["performance_statistics"]['test_acc1_epoch_' + hp] - model["performance_statistics"]['train_acc1_epoch_' + hp]]
+            performance = [model["performance_statistics"]['test_acc1_epoch_' + self.hp] ,  
+                           model["performance_statistics"]['test_loss_epoch_' + self.hp] ,  
+                           model["performance_statistics"]['train_acc1_epoch_' + self.hp], 
+                           model["performance_statistics"]['train_loss_epoch_' + self.hp], 
+                           model["performance_statistics"]['test_acc1_epoch_' + self.hp] - model["performance_statistics"]['train_acc1_epoch_' + self.hp]]
 
 
         #except Exception as error:

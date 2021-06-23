@@ -49,11 +49,30 @@ class LayerType(Enum):
 
 class IOMetrics(NamedTuple):
     input_channel_rank: List[float]
-    input_channel_S: List[float]
-    input_channel_condition: List[float]
+    input_channel_S_BE: List[float]
+    input_channel_condition_BE: List[float]
+    input_channel_ER_BE: List[float]
+    input_channel_S: List[float]                #AE but kept same name in case of dependencies
+    input_channel_condition: List[float]     #AE
+    input_channel_ER_AE: List[float]
+    input_channel_fro_BE: List[float]
+    input_channel_fro_AE: List[float]
+    input_channel_spec_BE: List[float]
+    input_channel_spec_AE: List[float]
+    input_channel_noise: List[float]
+    output_channel_spec_BE: List[float]
     output_channel_rank: List[float]
-    output_channel_S: List[float]
-    output_channel_condition: List[float]
+    output_channel_S_BE: List[float]
+    output_channel_condition_BE: List[float]
+    output_channel_ER_BE: List[float]
+    output_channel_S: List[float]               #also AE
+    output_channel_condition: List[float]    #AE
+    output_channel_ER_AE: List[float]  
+    output_channel_fro_BE: List[float]
+    output_channel_fro_AE: List[float]
+    output_channel_spec_BE: List[float]
+    output_channel_spec_AE: List[float]
+    output_channel_noise: List[float]
     fc_S: float
     fc_rank: float
 
