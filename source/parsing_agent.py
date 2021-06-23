@@ -10,6 +10,7 @@ from loadmodels import get_cell_based_tiny_net
 import glob
 import json
 import torch
+from qc_nin import nin as NIN
 
 
 class ParsingAgent:
@@ -183,22 +184,24 @@ class ParsingAgent:
             print("Model: ", model_num)
 
             #Get Model
-            model = torch.load(self.sspace[self.index])
+            model_info = torch.load(self.sspace[self.index])
 
             #Get Weights
             weights = []
-            for key in model["state_dict_network"].keys():
-                if(len(model["state_dict_network"][key].shape) == 4 and ('onv' in key or 'down' in key)):
+            for key in model_info["state_dict_network"].keys():
+                if(len(model_info["state_dict_network"][key].shape) == 4 and ('onv' in key or 'down' in key)):
                     #print(key, " : ")#, model["state_dict"][key].shape)
-                    weights.append(model["state_dict_network"][key])
+                    weights.append(model_info["state_dict_network"][key].cpu())
 
             #Test_acc, Test_loss, Train_acc, Train_loss, Test_acc - Train_acc
-            performance = [model["performance_statistics"]['test_acc1_epoch_' + self.hp] ,  
-                           model["performance_statistics"]['test_loss_epoch_' + self.hp] ,  
-                           model["performance_statistics"]['train_acc1_epoch_' + self.hp], 
-                           model["performance_statistics"]['train_loss_epoch_' + self.hp], 
-                           model["performance_statistics"]['test_acc1_epoch_' + self.hp] - model["performance_statistics"]['train_acc1_epoch_' + self.hp]]
-
+            performance = [model_info["performance_statistics"]['test_acc1_epoch_' + self.hp],  
+                           model_info["performance_statistics"]['test_loss_epoch_' + self.hp],  
+                           model_info["performance_statistics"]['train_acc1_epoch_' + self.hp], 
+                           model_info["performance_statistics"]['train_loss_epoch_' + self.hp], 
+                           model_info["performance_statistics"]['test_acc1_epoch_' + self.hp] - model_info["performance_statistics"]['train_acc1_epoch_' + self.hp]]
+            
+            model = NIN(self.sspace[self.index].split('_')[-9][-5:])
+            model.load_state_dict(model_info["state_dict_network"])
 
         #except Exception as error:
         #    print(type(error))

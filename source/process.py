@@ -324,7 +324,10 @@ def get_dataset_dep(model, dataset, margin_param, GSNR_params, pac_params):
     x = torch.ones(expand)
     x = model1(x)
     del model1
-    x = x[1].clone().detach()
+    try:
+        x = x[1].clone().detach()
+    except:
+        x = x.clone().detach()
     pathnorm = math.sqrt(torch.sum(x))
     '''
     #gsnr

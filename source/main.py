@@ -14,7 +14,7 @@ if __name__ == "__main__":
                                 #For DEMOGEN -> NIN_CIFAR10, RESNET_CIFAR10, RESNET_CIFAR100
                                 #For zenNet  -> CIFAR10, CIFAR100, ImageNet
                                 #For LilJon  -> CIFAR10, CIFAR100
-    hp = '2'
+    hp = '37'
     new = 1
     start = 0 
 
