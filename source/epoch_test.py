@@ -153,17 +153,17 @@ if __name__ == "__main__":
 
     fig, ax1 = plt.subplots()
 
-    ln1 = ax1.plot(x, test_acc,color='black',lw=2)
+    ln1 = ax1.plot(x, test_acc,color='black',lw=3)
     ax1.tick_params(axis='y')
     ax1.set_ylabel('test_accuracy')
     ax1.set_xlabel('epoch')
 
     ax11 = ax1.twinx()
-    ln11 = ax11.plot(x, gap, color='grey',lw=2)
+    ln11 = ax11.plot(x, gap, color='grey',lw=3)
     ax11.set_yticks([])
 
     ax2 = ax1.twinx()
-    ln2 = ax2.plot(x, QG_BE[1,:],':',color='green',lw=3)
+    ln2 = ax2.plot(x, QG_BE[1,:],'--',color='green',lw=3)
     ax2.set_yticks([])
     '''
     ax3 = ax1.twinx()
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     ax3.set_yticks([])
     '''
     ax5 = ax1.twinx()
-    ln5 = ax5.plot(x, ER_BE[0,:],':',color='blue',lw=3)
+    ln5 = ax5.plot(x, ER_BE[0,:],'--',color='blue',lw=3)
     ax5.set_yticks([])
     
     '''
