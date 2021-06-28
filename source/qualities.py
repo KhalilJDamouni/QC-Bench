@@ -70,7 +70,7 @@ def correlate(filename):
         data[key].loc[idxx] = 0
         data[key] = data[key].dropna(axis=0)
         data[key] = np.array_split(data[key],idx)
-        
+    
         for i in range(len(data[key])):
             #equalize all model sizes
             prevlen = len(data[key][i])
@@ -82,13 +82,13 @@ def correlate(filename):
                 #print(key,str(i),num_non_zero,prevlen)
                 zero_models.append(i)
         data[key] = np.asarray(data[key])
-        
+    
     zero_models = list(set(zero_models))
-    #print("zero models deleted: "+str(len(zero_models)))
+    print("zero models deleted: "+str(len(zero_models)))
     for key in list(data.keys()):
         data[key] = np.delete(data[key],zero_models,axis=0)
         data[key] = ma.masked_array(data[key], mask=(data[key]==0.))
-    
+
     data['in_QS_BE'] = np.arctan2(data['in_S_BE'],(1-1/data['in_C_BE']))
     data['out_QS_BE'] = np.arctan2(data['out_S_BE'],(1-1/data['out_C_BE']))
     data['in_QS_AE'] = np.arctan2(data['in_S_AE'],(1-1/data['in_C_AE']))
@@ -105,7 +105,7 @@ def correlate(filename):
     aggregates['QS_AE'] = sqrtlog(aggregates['QS_AE'],np.ma.concatenate((data['in_weight_AE'],data['out_weight_AE']),axis=1))
     aggregates['QE_BE'] = sqrtlog(aggregates['QE_BE'],np.ma.concatenate((data['in_weight_BE'],data['out_weight_BE']),axis=1))
     aggregates['QE_AE'] = sqrtlog(aggregates['QE_AE'],np.ma.concatenate((data['in_weight_AE'],data['out_weight_AE']),axis=1))
-  
+
     aggregates['spec_BE'] = all_aggs(data['in_spec_BE'],data['out_spec_BE'],data['in_weight_BE'],data['out_weight_BE'])
     aggregates['spec_AE'] = all_aggs(data['in_spec_AE'],data['out_spec_AE'],data['in_weight_AE'],data['out_weight_AE'])
     aggregates['fro_BE'] = all_aggs(data['in_fro_BE'],data['out_fro_BE'],data['in_weight_BE'],data['out_weight_BE'])
@@ -140,12 +140,12 @@ def correlate(filename):
         correlationsp["path_"+x] = abs(stats.pearsonr(aggregates[x], aggregates['path'])[0])
         correlationss["path_"+x] = abs(stats.spearmanr(aggregates[x], aggregates['path'])[0])
     correlations = {'pearson':correlationsp,'spearman':correlationss}
-    #print(correlations)
+    print(len(aggregates['test_acc']))
     
     return correlations
 
 if __name__ == "__main__":
-    filename = "results-06-17-2021_14-31-15-NATST-cifar10-200"
+    filename = "results-06-18-2021_17-28-21-NATSS-cifar100-90"
     file=Path(str(sys.path[0][0:-7])+"/outputs/"+filename+".csv")
     df = pd.read_csv(file,skip_blank_lines=False)
     data = dict()
@@ -244,9 +244,12 @@ if __name__ == "__main__":
 
     #plots
     #plt.subplot(2,1,1)
-    #plt.bar(correlationsp.keys(),correlationsp.values())
+    plt.bar(correlationsp.keys(),correlationsp.values())
     #plt.subplot(2,1,2)
+
+    '''
     plt.plot(aggregates['fro_AE'][1][0],aggregates['test_acc'],'ro')
     m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
     plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
+    '''
     plt.show()

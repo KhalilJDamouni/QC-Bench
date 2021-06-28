@@ -49,14 +49,11 @@ def norm(x, L, a=[]):
         return np.prod(np.power(x,a/(np.sum(a))))
 
 if __name__ == "__main__":
-    f=Path(str(sys.path[0][0:-7])+"/outputs/epochcifar100.xlsx")
-    df = pd.read_excel(f)
+    f=Path(str(sys.path[0][0:-7])+"/outputs/results_date=2021-06-24-06-53-53_trial=0_ResNet18CIFAR_CIFAR10_Adasmomentum=0.9_weight_decay=0.0005_beta=0.9_linear=0.0_gamma=0.5_step_size=25.0_None_LR=0.03.csv")
+    df = pd.read_csv(f)
     headers = get_headers(df)
     print(headers)
     df = df.T
-    weights = np.array([3,64,64,64,64,64,64,64,128,64,128,128,128,128,128,128,128,256,128,256,256,256,256,
-    256,256,256,256,256,256,256,512,256,512,512,512,512,27,64,64,64,64,64,64,128,128,128,128,128,128,
-    128,128,128,256,256,256,256,256,256,256,256,256,256,256,256,256,512,512,512,512,512,512,512])
 
     in_KG_BE = np.asarray(df.iloc[headers.index('in_s_be') + 1::len(headers),:])
     in_KG_BE = ma.masked_array(in_KG_BE, mask=in_KG_BE==0)
@@ -147,35 +144,67 @@ if __name__ == "__main__":
     QG_AE = np.asarray([norm(QG_AE,2),norm(QG_AE,3)])
     ER_BE = np.asarray([norm(ER_BE,2),norm(ER_BE,3)])
     ER_AE = np.asarray([norm(ER_AE,2),norm(ER_AE,3)])
-
+    noise = np.asarray([norm(noise,2),norm(noise,3)])
+    F_BE = np.asarray([norm(fro_BE,2),norm(fro_BE,3)])
+    F_AE = np.asarray([norm(fro_AE,2),norm(fro_AE,3)])
+    S_BE = np.asarray([norm(spec_BE,2),norm(spec_BE,3)])
+    S_AE = np.asarray([norm(spec_AE,2),norm(spec_AE,3)])
     x=np.arange(0,250,1)
 
     fig, ax1 = plt.subplots()
 
-    ln1 = ax1.plot(x, test_acc,color='blue')
+    ln1 = ax1.plot(x, test_acc,color='black',lw=2)
     ax1.tick_params(axis='y')
     ax1.set_ylabel('test_accuracy')
     ax1.set_xlabel('epoch')
 
-    ax2 = ax1.twinx()
-    ln2 = ax2.plot(x, QG_AE[1,:],color='red')
-    ax2.set_yticks([])
+    ax11 = ax1.twinx()
+    ln11 = ax11.plot(x, gap, color='grey',lw=2)
+    ax11.set_yticks([])
 
+    ax2 = ax1.twinx()
+    ln2 = ax2.plot(x, QG_BE[1,:],':',color='green',lw=3)
+    ax2.set_yticks([])
+    '''
     ax3 = ax1.twinx()
     ln3 = ax3.plot(x, QG_BE[1,:],color='green')
     ax3.set_yticks([])
-
+    '''
+    ax5 = ax1.twinx()
+    ln5 = ax5.plot(x, ER_BE[0,:],':',color='blue',lw=3)
+    ax5.set_yticks([])
+    
+    '''
     ax4 = ax1.twinx()
     ln4 = ax4.plot(x, ER_BE[0,:],color='orange')
     ax4.set_yticks([])
-
-    ax5 = ax1.twinx()
-    ln5 = ax5.plot(x, ER_AE[0,:],color='purple')
-    ax5.set_yticks([])
-
-    legend_elements = [Line2D([0], [0], color='b', lw=2, label='test accuracy'),Line2D([0], [0], color='r', lw=2, label=r'$\widehat{Q}_{G}^{p}$'),Line2D([0], [0], color='g', lw=2, label=r'${Q}_{G}^{p}$'),
-    Line2D([0], [0], color='orange', lw=2, label=r'${Q}_{ER}^{L2}$'),Line2D([0], [0], color='purple', lw=2, label=r'$\widehat{Q}_{ER}^{L2}$')]
-    ax1.legend(handles=legend_elements, loc=4)
-
+    '''
+    ax7 = ax1.twinx()
+    ln7 = ax7.plot(x, F_BE[0,:],':',color='yellow',lw=3)
+    ax7.set_yticks([])
+    
+    '''
+    ax6 = ax1.twinx()
+    ln6 = ax6.plot(x, F_BE[0,:],color='yellow')
+    ax6.set_yticks([])
+    '''
+    ax9 = ax1.twinx()
+    ln9 = ax9.plot(x, S_BE[0,:],":",color='red',lw=3)
+    ax9.set_yticks([])
+    
+    '''
+    ax8 = ax1.twinx()
+    ln8 = ax8.plot(x, S_BE[0,:],color='brown')
+    ax8.set_yticks([])
+    '''
+    
+    ax10 = ax1.twinx()
+    ln10 = ax10.plot(x, noise[0,:], color="brown", lw=2)
+    ax10.set_yticks([])
+    
+    legend_elements = [Line2D([0], [0], color='black', lw=2, label='test accuracy'),Line2D([0], [0], color='grey', lw=2, label='generalization gap'),Line2D([0], [0], color='brown', lw=2, label='noise'),Line2D([0], [0], color='green', ls=':', lw=3, label=r'${Q}_{SQ}^{p}$'),Line2D([0], [0], color='blue', ls=':', lw=3, label=r'${Q}_{E}^{L2}$'),
+    Line2D([0], [0], color='yellow', lw=3, ls=":", label=r'${Q}_{F}^{L2}$'),Line2D([0], [0], color='red', lw=3, ls=":", label=r'${Q}_{S}^{L2}$')]
+    ax1.legend(handles=legend_elements, loc=7)
+    plt.title("Quality Metrics before LRF during Training")
     fig.tight_layout()
     plt.show()
