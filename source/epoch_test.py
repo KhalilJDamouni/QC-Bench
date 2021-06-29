@@ -163,7 +163,7 @@ if __name__ == "__main__":
     ax11.set_yticks([])
 
     ax2 = ax1.twinx()
-    ln2 = ax2.plot(x, QG_BE[1,:],'--',color='green',lw=3)
+    ln2 = ax2.plot(x, QG_BE[1,:],'--',color=np.array((127, 230, 127)) / 255,lw=3)
     ax2.set_yticks([])
     '''
     ax3 = ax1.twinx()
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     ax3.set_yticks([])
     '''
     ax5 = ax1.twinx()
-    ln5 = ax5.plot(x, ER_BE[0,:],'--',color='blue',lw=3)
+    ln5 = ax5.plot(x, ER_BE[0,:],'--',color=np.array((0, 212, 255))/255,lw=3)
     ax5.set_yticks([])
     
     '''
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     ax4.set_yticks([])
     '''
     ax7 = ax1.twinx()
-    ln7 = ax7.plot(x, F_BE[0,:],':',color='yellow',lw=3)
+    ln7 = ax7.plot(x, F_BE[0,:],':',np.array((229, 127, 255))/255,lw=3)
     ax7.set_yticks([])
     
     '''
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     ax6.set_yticks([])
     '''
     ax9 = ax1.twinx()
-    ln9 = ax9.plot(x, S_BE[0,:],":",color='red',lw=3)
+    ln9 = ax9.plot(x, S_BE[0,:],":",color=np.array((120, 70, 255))/255,lw=3)
     ax9.set_yticks([])
     
     '''
