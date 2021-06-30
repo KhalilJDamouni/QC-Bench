@@ -5,6 +5,8 @@ import json
 #import tensorflow as tf
 import glob
 import torch
+import sys
+
 
 
 def main(benchmark, dataset, hp, new, start):
@@ -45,7 +47,7 @@ if __name__ == "__main__":
     start = 0 
 
     if(benchmark == 'LilJon'):
-        for epoch in range(70):
+        for epoch in range(sys.argv[0], sys.argv[1]):
             print(epoch)
             main(benchmark, dataset, str(epoch), new, start)
     else:

@@ -200,7 +200,7 @@ class ParsingAgent:
             
             model = NIN(self.sspace[self.index].split('_')[-9][-5:])
             model.load_state_dict(model_info["state_dict_network"])
-            del(model_info)
+            #del(model_info)
 
         #except Exception as error:
         #    print(type(error))
