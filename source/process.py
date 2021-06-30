@@ -184,7 +184,8 @@ def norms_low_rank(tensor):
     return [spec_norm, fro_norm]
 
 def norms(tensor):
-    spec_norm = LA.norm(tensor,ord=2)
+    U, s, V = torch.svdvals(tensor)
+    spec_norm = max(s)
     fro_norm = LA.norm(tensor,ord='fro')
     return [spec_norm, fro_norm]
 
