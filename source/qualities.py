@@ -145,8 +145,9 @@ def correlate(filename):
     return correlations
 
 if __name__ == "__main__":
-    filename = "results-06-18-2021_17-28-21-NATSS-cifar100-90"
+    filename = "LilJon-AdaM-CIFAR10/results-07-06-2021_05-05-03-LilJon-CIFAR10-69"
     file=Path(str(sys.path[0][0:-7])+"/outputs/"+filename+".csv")
+    #file = './csv_files/LilJon-SGD-CIFAR100/results-06-30-2021_23-15-03-LilJon-CIFAR100-5.csv'
     df = pd.read_csv(file,skip_blank_lines=False)
     data = dict()
 
@@ -244,12 +245,12 @@ if __name__ == "__main__":
 
     #plots
     #plt.subplot(2,1,1)
-    plt.bar(correlationsp.keys(),correlationsp.values())
-    #plt.subplot(2,1,2)
+    #plt.bar(correlationsp.keys(),correlationsp.values())
+    plt.subplot(2,1,2)
 
-    '''
-    plt.plot(aggregates['fro_AE'][1][0],aggregates['test_acc'],'ro')
-    m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
-    plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
-    '''
+    
+    plt.plot(aggregates['QS_BE'][1][0],aggregates['gap'],'ro')
+    #m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
+    #plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
+    
     plt.show()
