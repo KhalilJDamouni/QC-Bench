@@ -47,7 +47,7 @@ if __name__ == "__main__":
     start = 0 
 
     if(benchmark == 'LilJon'):
-        for epoch in range(sys.argv[0], sys.argv[1]):
+        for epoch in range(int(sys.argv[1]), int(sys.argv[2])):
             print(epoch)
             main(benchmark, dataset, str(epoch), new, start)
     else:

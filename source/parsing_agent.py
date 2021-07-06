@@ -198,7 +198,8 @@ class ParsingAgent:
                            model_info["performance_statistics"]['train_loss_epoch_' + self.hp], 
                            model_info["performance_statistics"]['test_acc1_epoch_' + self.hp] - model_info["performance_statistics"]['train_acc1_epoch_' + self.hp]]
             
-            model = NIN(self.sspace[self.index].split('_')[-9][-5:])
+            print("num classes: "+self.dataset.split('R')[-1])
+            model = NIN(self.sspace[self.index].split('_')[-9][-5:],int(self.dataset.split('r')[-1]))
             model.load_state_dict(model_info["state_dict_network"])
             #del(model_info)
 
