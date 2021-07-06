@@ -13,4 +13,5 @@ source/metrics/robust-generalization-measures
 source/config_utils
 source/figures
 source/loadmodels
-plotting/QC-Bench-SGD
+plotting/csv_files
+plotting/figures
