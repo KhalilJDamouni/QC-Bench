@@ -145,7 +145,7 @@ def correlate(filename):
     return correlations
 
 if __name__ == "__main__":
-    filename = "LilJon-AdaM-CIFAR10/results-07-06-2021_05-05-03-LilJon-CIFAR10-69"
+    filename = "results-06-18-2021_17-27-02-NATSS-cifar10-90"
     file=Path(str(sys.path[0][0:-7])+"/outputs/"+filename+".csv")
     #file = './csv_files/LilJon-SGD-CIFAR100/results-06-30-2021_23-15-03-LilJon-CIFAR100-5.csv'
     df = pd.read_csv(file,skip_blank_lines=False)
@@ -246,11 +246,20 @@ if __name__ == "__main__":
     #plots
     #plt.subplot(2,1,1)
     #plt.bar(correlationsp.keys(),correlationsp.values())
-    plt.subplot(2,1,2)
+    #plt.subplot(2,1,2)
 
-    
-    plt.plot(aggregates['QS_BE'][1][0],aggregates['gap'],'ro')
-    #m, b = np.polyfit(aggregates['QE_AE'][3],aggregates['test_acc'], 1)
-    #plt.plot(np.arange(1.5,2.4,0.1),m*np.arange(1.5,2.4,0.1)+b)
+    x = aggregates['QS_BE'][2][0]
+    y = aggregates['test_acc']
+
+    fig, ax1 = plt.subplots()
+    ax1.plot(x,y,'ro',alpha=0.5,lw=0.5)
+    ax1.set_xlabel('Metric',fontsize=22)
+    ax1.set_ylabel('Test Accuracy',fontsize=22)
+    ax1.tick_params(axis='x',labelsize=18)
+    ax1.tick_params(axis='y',labelsize=18)
+    fig.tight_layout()
+    fig.set_size_inches(13/2, 13/2)
+    coefficients = np.polyfit(x,y, 1)
+    ax1.plot(np.arange(min(x),max(x),0.001),np.polyval(coefficients,np.arange(min(x),max(x),0.001)), c='red', lw=3)
     
     plt.show()
