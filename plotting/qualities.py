@@ -135,8 +135,12 @@ def correlate(file):
         for y in Y:
             for i in range(5):
                 for t in range(8):
-                    correlationsp[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = abs(stats.pearsonr(aggregates[x], aggregates[y][i][t])[0])
-                    correlationss[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = abs(stats.spearmanr(aggregates[x], aggregates[y][i][t])[0])
+                    if(x == 'test_acc'):
+                        correlationsp[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = stats.pearsonr(aggregates[x], aggregates[y][i][t])[0]
+                        correlationss[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = stats.spearmanr(aggregates[x], aggregates[y][i][t])[0]
+                    else:
+                        correlationsp[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = stats.pearsonr(aggregates[x], aggregates[y][i][t])[0]
+                        correlationss[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = stats.spearmanr(aggregates[x], aggregates[y][i][t])[0]
         correlationsp["path_"+x] = abs(stats.pearsonr(aggregates[x], aggregates['path'])[0])
         correlationss["path_"+x] = abs(stats.spearmanr(aggregates[x], aggregates['path'])[0])
     correlations = {'pearson':correlationsp,'spearman':correlationss}
@@ -234,8 +238,12 @@ if __name__ == "__main__":
         for y in Y:
             for i in range(5):
                 for t in range(8):
-                    correlationsp[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = abs(stats.pearsonr(aggregates[x], aggregates[y][i][t])[0])
-                    correlationss[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = abs(stats.spearmanr(aggregates[x], aggregates[y][i][t])[0])
+                    if(x == 'test_acc'):
+                        correlationsp[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = abs(stats.pearsonr(aggregates[x], aggregates[y][i][t])[0])
+                        correlationss[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = abs(stats.spearmanr(aggregates[x], aggregates[y][i][t])[0])
+                    else:
+                        correlationsp[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = stats.pearsonr(aggregates[x], aggregates[y][i][t])[0]
+                        correlationss[y+'_'+x+'_L'+str(i+1)+"_"+str(t)] = stats.spearmanr(aggregates[x], aggregates[y][i][t])[0]
         correlationsp["path_"+x] = abs(stats.pearsonr(aggregates[x], aggregates['path'])[0])
         correlationss["path_"+x] = abs(stats.spearmanr(aggregates[x], aggregates['path'])[0])
     correlations = {'pearson':correlationsp,'spearman':correlationss}
