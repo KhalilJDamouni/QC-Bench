@@ -15,3 +15,5 @@ source/figures
 source/loadmodels
 plotting/csv_files
 plotting/figures
+/results
+/results.zip
